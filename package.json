@@ -1,0 +1,27 @@
+{
+  "name": "genesis-epoch",
+  "private": true,
+  "version": "0.1.0",
+  "description": "创世纪元：AI文明诞生概率实验室 —— 第十四届全国大学生数字媒体科技作品及创意竞赛参赛作品",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "docs": "tsx scripts/gen-docs.ts",
+    "fonts": "python scripts/build-fonts.py"
+  },
+  "dependencies": {
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@types/three": "^0.186.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.3",
+    "vite-plugin-singlefile": "^2.3.3",
+    "vitest": "^5.0.3"
+  }
+}
