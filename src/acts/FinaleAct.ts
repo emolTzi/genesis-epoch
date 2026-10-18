@@ -1,4 +1,4 @@
-// 终章 · 知过必改（L5 未来）：一万个平行宇宙、揭示地球、历史合力、未来之钥、留言化作一颗星。
+// 终章 · 费米悖论（L5 未来）：一万个平行宇宙、揭示地球、历史合力、未来之钥、留言化作一颗星。
 
 import * as THREE from 'three';
 import { Act } from './Act';
@@ -9,10 +9,10 @@ import { runMonteCarlo, type MonteCarloResult } from '../sim/montecarlo';
 import { crowd, project, resultant, simulateFuture, FUTURE_STEPS, type FutureInput } from '../sim/future';
 import { THEORY } from '../data/theory';
 import { h, fitCanvas, COLORS, MONO_FONT, SANS_FONT, sup, fracText } from '../ui/dom';
-import { button, paramSlider, readouts, section, type SliderHandle } from '../ui/panel';
+import { button, paramSlider, readouts, section, type SliderHandle, folded } from '../ui/panel';
 import { ease } from '../core/tween';
 import { DISPLAY_FONT } from '../render/TextSprite';
-import { LAYER_NAMES, KEY_NAMES, type KeyId } from '../sim/types';
+import { LAYER_NAMES, KEY_NAMES } from '../sim/types';
 
 const EARTH_LOOK = { earth: 1, life: 1, city: 1, sea: 1, ice: 0.1, scorch: 0, dead: 0, cloud: 0.42, hazard: 0, scar: 0 };
 
@@ -67,7 +67,7 @@ export class FinaleAct extends Act {
     app.rig.minDist = 2;
     app.rig.maxDist = 70;
     app.rig.set({ target: new THREE.Vector3(0, 0, 0) });
-    void app.rig.to(app.tw, { dist: 46, el: 0.28 }, 2400);
+    void app.rig.to(app.tw, { dist: 34, el: 0.24 }, 2400);
     await app.fade(this.fieldFade, 0, 1, 1800);
     app.hud.setScale(21);
     this.buildFunnelPanel();
@@ -94,7 +94,7 @@ export class FinaleAct extends Act {
       this.meta,
       h('p', {}, '把同样的实验做一万次。每个光点是一个银河系：恒星形成率、行星、生命起源、智能、技术与文明寿命，都按不确定性随机抽样。'),
       section('概率筛选：你走过的每一层', this.funnel(), h('p', { class: 'hint' }, '在本作品设定的参数取值范围内随机抽样，能走过各层的比例（对数刻度）。')),
-      section('万宇宙蒙特卡洛', this.funnelRead.el,
+      folded('万宇宙蒙特卡洛', this.funnelRead.el,
         h('span', { class: 'eq' }, 'N = R★ · f_p · n_e · f_l · f_i · f_c · L'),
         h('p', { class: 'hint' }, '取值思路参照 Sandberg, Drexler & Ord 2018；区间为本作品设定（示意），所得比例是本模型下的结果，不代表该论文的数值结论。f_l = 1 − exp(−λVt)，log₁₀λVt 服从标准差 50 的正态分布。'),
       ),
@@ -288,19 +288,16 @@ export class FinaleAct extends Act {
     await this.handOver();
   }
 
-  /** 交出未来之钥：浑天仪六环全部点亮，环绕此刻的地球。 */
+  /** 交出未来之钥：把此刻的地球留在大厅中央。 */
   private async handOver(): Promise<void> {
     const app = this.app;
     this.stage = 'done';
     const thesis = THEORY.find((t) => t.id === 'thesis11')!;
     if (app.state.mode === 'free') app.narrate({ text: `“${thesis.quote}”`, ms: 6000 });
-    app.armillary.setKeys(new Set<KeyId>([...app.state.keys, 'future']));
     app.hallRoot.visible = true;
     app.hall.setOpacity(0);
-    await app.fade({ group: app.armillary.group, setOpacity: (a) => app.armillary.setOpacity(a) }, 0, 1, 2400);
     void app.rig.to(app.tw, { dist: 10.5, el: 0.16 }, 3200);
     if (!app.state.has('core')) app.state.unlock('core');
-    app.armillary.pulse('future');
     this.buildEndPanel();
   }
 

@@ -1,4 +1,4 @@
-// 第①幕 · 天地玄黄（L0 物理常数）：大爆炸、宇宙网、α–α_s 可行孤岛。
+// 第①幕 · 精细调节（L0 物理常数）：大爆炸、宇宙网、α–α_s 可行孤岛。
 // 回答“宇宙为什么允许生命存在”。本源之钥第一次游玩时封印，走完终章或以首席科学家身份校准后解锁。
 
 import * as THREE from 'three';
@@ -103,7 +103,7 @@ export class OriginAct extends Act {
       section('宇宙学常数', this.lambda.el),
       section('推演结论', this.verdict.el, h('p', { class: 'hint' }, '注意：物理常数在整个宇宙中处处相同。它回答“宇宙为何允许生命”，不能解释“为何只看到我们”。')),
       core ? h('div', { class: 'btns' }, button('按这组常数创造宇宙', () => void this.commit())) : null,
-      this.nextButton('继续：日月盈昃', () => void this.tryNext()),
+      this.nextButton('继续：宜居带', () => void this.tryNext()),
     );
     requestAnimationFrame(() => this.drawIsland());
   }

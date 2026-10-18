@@ -7,10 +7,11 @@ import { THEORY } from '../data/theory';
 import { NODES, nodeStatus } from '../sim/causal';
 import { CONFIDENCE_NAMES, KEY_NAMES, LAYER_NAMES, type Layer } from '../sim/types';
 import { confidenceChip } from './overlays';
+import { GLOSSARY, GLOSSARY_FIELDS } from '../data/glossary';
 import type { State } from '../app/state';
 
-type Tab = 'chronicle' | 'cards' | 'params' | 'graph' | 'theory' | 'method';
-const TABS: [Tab, string][] = [['chronicle', '编年史'], ['cards', '知识卡'], ['params', '参数注册表'], ['graph', '因果图'], ['theory', '理论对照'], ['method', '方法与声明']];
+type Tab = 'chronicle' | 'glossary' | 'cards' | 'params' | 'graph' | 'theory' | 'method';
+const TABS: [Tab, string][] = [['chronicle', '编年史'], ['glossary', '名词解释'], ['cards', '知识卡'], ['params', '参数注册表'], ['graph', '因果图'], ['theory', '理论对照'], ['method', '方法与声明']];
 
 export class Archive {
   readonly el: HTMLElement;
@@ -42,12 +43,41 @@ export class Archive {
     this.tabs.forEach((b, i) => b.setAttribute('aria-selected', String(TABS[i][0] === tab)));
     clear(this.body);
     if (tab === 'chronicle') this.body.append(this.chronicle());
+    if (tab === 'glossary') this.body.append(this.glossary());
     if (tab === 'cards') this.body.append(this.cards());
     if (tab === 'params') this.body.append(this.params());
     if (tab === 'graph') this.body.append(this.graph());
     if (tab === 'theory') this.body.append(this.theory());
     if (tab === 'method') this.body.append(this.method());
     this.body.scrollTop = 0;
+  }
+
+  /** 打开名词解释并定位到某个条目。 */
+  openGlossary(id: string): void {
+    this.el.hidden = false;
+    this.show('glossary');
+    const entry = this.body.querySelector<HTMLElement>(`#gl-${id}`);
+    if (!entry) return;
+    this.body.scrollTop = Math.max(0, entry.offsetTop - this.body.offsetTop - 24);
+    entry.classList.remove('flash');
+    void entry.offsetWidth;
+    entry.classList.add('flash');
+  }
+
+  private glossary(): HTMLElement {
+    return h('div', { class: 'glossary' },
+      h('p', { class: 'hint' }, `共 ${GLOSSARY.length} 个名词。作品界面中带虚线下划线的名词，双击即可跳转到这里；悬停可看一句话释义。`),
+      ...GLOSSARY_FIELDS.map((f) => h('section', { class: 'gl-group' },
+        h('h3', { class: 'no-gl' }, f),
+        h('div', { class: 'gl-grid' }, ...GLOSSARY.filter((g) => g.field === f).map((g) => h('article', { class: 'gl-entry', id: `gl-${g.id}` },
+          h('h4', { class: 'no-gl' }, g.term, g.aliases?.length ? h('small', {}, ` · ${g.aliases.join(' · ')}`) : null),
+          h('p', { class: 'gl-brief' }, g.brief),
+          h('p', {}, g.detail),
+          h('p', { class: 'gl-use' }, h('b', { class: 'no-gl' }, '在本作品中：'), g.use),
+          g.ref ? h('div', { class: 'src' }, `延伸阅读：${g.ref}`) : null,
+        ))),
+      )),
+    );
   }
 
   private chronicle(): HTMLElement {

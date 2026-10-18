@@ -1,0 +1,63 @@
+<h1 class="plain nonum" id="appA">附录 A　专业名词注释</h1>
+<p>本附录由作品源码中的名词库（<code>src/data/glossary.ts</code>）自动生成，与作品界面中“双击跳转”的注释内容完全一致。释义面向中学以上读者，由 AI 辅助撰写，团队审校中。</p>
+<!--GLOSSARY-->
+
+<h1 class="plain nonum" id="appB">附录 B　参数注册表</h1>
+<p>本表由 <code>src/data/params.ts</code> 自动生成。置信等级：<span class="conf c-实证">实证</span> 有直接观测或实验依据；<span class="conf c-估计">估计</span> 基于模型或间接数据的估计；<span class="conf c-推测">推测</span> 跨越多个数量级的未知量；<span class="conf c-争议">争议</span> 学界存在不同结论；<span class="conf c-示意">示意</span> 理论模型参数，用于表达机制与方向，不是测量值。</p>
+<!--PARAMS-->
+
+<h1 class="plain nonum" id="appC">附录 C　文创产品设计</h1>
+<p>围绕作品的核心意象（五把宇宙钥匙、行星与文明灯火），并借用中国古代天文仪器的造型语言，我们设计了一组文创产品概念，用于展陈纪念、课堂奖励与网络传播活动。以下产品效果图均由 ChatGPT 根据团队撰写的提示词生成，统一使用作品的配色体系（深空黑 #05060A、星云紫 #2A1B5C、量子青 #3FF2E6、曙光金 #F5C66B）；正式打样前需由团队完成平面设计与尺寸规格。</p>
+<table>
+<thead><tr><th style="width:22%">产品</th><th>设计要点</th><th style="width:26%">使用场景</th></tr></thead>
+<tbody>
+<tr><td>五钥珐琅徽章套组</td><td>本源、星辰、元素、生命、文明五把钥匙，钥匙柄融入星环与钥匙齿纹；对应作品中的五层宇宙</td><td>展陈纪念、课堂“解锁”奖励</td></tr>
+<tr><td>星环小夜灯</td><td>黄铜与亚克力，五道圆环可转动，中央发光行星</td><td>文旅商店、桌面陈设</td></tr>
+<tr><td>明信片与金属书签</td><td>七张章节插画明信片；镂空星图书签</td><td>展馆售卖、活动礼品</td></tr>
+<tr><td>文具周边</td><td>烫金笔记本、帆布托特包、贴纸套组</td><td>校园活动、网络抽奖</td></tr>
+<tr><td>“观测者·零号”手办与立牌</td><td>作品中 AI 观测者的形象化设计：头部为小型星环装置的全息机器人</td><td>盲盒、品牌形象</td></tr>
+</tbody>
+</table>
+<div class="grid2">
+<gpt id="11_pins" cap="五钥珐琅徽章套组效果图。">
+<gpt id="12_lamp" cap="星环小夜灯效果图。">
+<gpt id="13_postcards" cap="明信片与金属书签效果图。">
+<gpt id="14_stationery" cap="文具周边效果图。">
+</div>
+<gpt id="15_figure" cap="“观测者·零号”盲盒手办与亚克力立牌效果图。">
+
+<h1 class="plain nonum" id="appD">附录 D　人工智能工具使用说明</h1>
+<p class="noindent"><b>勾选：使用。</b>本说明依据竞赛《参赛指南》第十条与《评分标准及奖项设置》第九条如实填写，正式提交时按官网统一模板誊写<span class="todo">【待核对模板格式】</span>。</p>
+<table>
+<thead><tr><th style="width:20%">工具</th><th style="width:30%">使用环节</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td>DeepSeek（深度求索），对话式编程助手</td><td>竞赛文件解读；设计案起草；源代码初版生成与迭代；作品内文案初稿；文档初稿与本文排版程序；演示视频渲染程序</td><td>团队提出方向 → AI 生成方案与初版代码 → 团队审核、提出修改 → AI 修改 → 团队审定；每轮决策记入决策日志</td></tr>
+<tr><td>Google Cloud Text-to-Speech（Chirp3-HD）</td><td>演示视频中文解说合成，文稿与语速由团队审定</td><td>按《旁白文稿》逐句合成后混音；成片画面为作品实机逐帧录制，片尾注明</td></tr>
+<tr><td>ChatGPT（OpenAI）网页版图像生成</td><td>本文封面、章节扉页概念图、第三章章节概念图、附录 C 文创产品效果图</td><td>提示词由团队与 AI 共同撰写，统一画风；生成图像<b>只用于本文与文创设计</b>，作品运行画面中不包含任何 AI 生成的图像；全部图像在图上与图注中标注“AI 生成”</td></tr>
+<tr><td>作品运行时的大模型（可选）</td><td>观测者·零号：自然语言 → 参数提议；引擎结果 → 讲解；在线模式下为文明取名</td><td>OpenAI 兼容接口，由观众自行填写服务与 Key，作品不内置任何 Key；提议必须通过校验闸门，数值全部由引擎计算；离线时不调用任何大模型</td></tr>
+</tbody>
+</table>
+<p class="noindent"><b>团队的实质性工作</b>：云南大学学生团队（队长李牧唐、队员普凡）。选题与作品方向（8 项方向决策）；审定设计案并批准开发；五轮审计并提出修改意见（“缺少实时可更改的数据与微观推演”“建模过于简陋，轨道只在调整时显示”“没有意料之中的惊艳，建模要更精细”“章节标题应点明科学问题”“金色轨道遮挡行星、视觉噪音大”），均已落实到代码与画面；旁白文稿与章节标题审定；演示视频画面与解说口径审看；参数与文献核对、单元测试与双机验收、答辩准备。逐条记录见[决策日志](决策日志.md)。</p>
+<p class="noindent"><b>生成合成内容的标识</b>：在线模式下观测者的回答与文明名字在界面上标注“AI 生成”；离线预置回答标注“离线缓存 · AI 辅助撰写”；本文中 ChatGPT 生成的图像标注“AI 生成”。</p>
+
+<h1 class="plain nonum" id="appE">附录 E　原创性与知识产权声明</h1>
+<p class="noindent">本团队<span class="todo">【团队名称】</span>就参赛作品《创世纪元：AI 文明诞生概率实验室》郑重声明：</p>
+<ol>
+<li>本作品的选题、创意构思与方向由本团队提出并审定。开发过程中使用了人工智能工具，使用情况已在附录 D 中如实披露。</li>
+<li>本作品使用的第三方代码、字体与影像均已在下表中注明来源与授权方式，并随作品附带许可证全文；不包含未经授权的第三方素材。</li>
+<li>本作品不使用任何现有文学、影视或游戏作品的专有名词、角色与原文。</li>
+<li>本作品中的科学数据与结论均注明出处；示意性模型已在作品中明确标注，不作为对现实的预测。</li>
+<li>本作品此前<span class="todo">【未曾 / 曾经（请说明）】</span>参加本竞赛往届评审或其他竞赛。</li>
+<li>本团队对作品内容、数据来源、技术实现、版权授权与申报材料的真实性负责。</li>
+</ol>
+<table>
+<thead><tr><th>第三方资源</th><th>用途</th><th>授权</th></tr></thead>
+<tbody>
+<tr><td>three.js 0.186</td><td>实时 3D 渲染与后期泛光</td><td>MIT</td></tr>
+<tr><td>思源宋体 Heavy（Noto Serif SC Black）子集</td><td>作品标题字体</td><td>SIL OFL 1.1</td></tr>
+<tr><td>JetBrains Mono 子集</td><td>数据读数字体</td><td>SIL OFL 1.1</td></tr>
+<tr><td>NASA Blue Marble、Earth at Night 2012</td><td>终章地球昼夜影像</td><td>NASA 公有领域</td></tr>
+<tr><td>KaTeX、Paged.js（仅用于本文排版）</td><td>公式渲染与分页</td><td>MIT</td></tr>
+</tbody>
+</table>
+<div class="sign"><div>团队负责人：李牧唐</div><div>成员：普凡</div><div>学校：云南大学</div><div>指导教师：无</div></div>

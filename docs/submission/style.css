@@ -1,0 +1,203 @@
+/* 作品介绍文档版式：A4，深色封面与章节扉页，正文浅底，科技感的数据表与规格卡。 */
+:root {
+  --ink: #141824;
+  --soft: #4a5266;
+  --line: #d5dae6;
+  --space: #05060a;
+  --nebula: #2a1b5c;
+  --cyan: #0fb3aa;
+  --cyan-hi: #3ff2e6;
+  --gold: #c8962c;
+  --gold-hi: #f5c66b;
+  --red: #d8463c;
+  --paper: #ffffff;
+  --tint: #f3f6fb;
+  --serif: 'Noto Serif SC', 'Source Han Serif SC', 'SimSun', serif;
+  --sans: 'Noto Sans SC', 'Source Han Sans SC', 'Microsoft YaHei', sans-serif;
+  --mono: 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace;
+}
+
+@page {
+  size: A4;
+  margin: 22mm 18mm 22mm 18mm;
+  @top-left { content: '创世纪元 · AI 文明诞生概率实验室'; font: 8pt var(--sans); color: #8a93a8; letter-spacing: 0.08em; }
+  @top-right { content: string(chapter); font: 8pt var(--sans); color: #8a93a8; }
+  @bottom-center { content: counter(page); font: 600 8.5pt var(--mono); color: var(--cyan); }
+  @bottom-left { content: '第十四届全国大学生数字媒体科技作品及创意竞赛'; font: 7pt var(--sans); color: #a8b0c2; }
+  @bottom-right { content: '科幻+及元宇宙数字作品'; font: 7pt var(--sans); color: #a8b0c2; }
+}
+@page cover { margin: 0; @top-left { content: none; } @top-right { content: none; } @bottom-center { content: none; } @bottom-left { content: none; } @bottom-right { content: none; } }
+@page opener { margin: 0; @top-left { content: none; } @top-right { content: none; } @bottom-left { content: none; } @bottom-right { content: none; } @bottom-center { content: counter(page); color: var(--cyan-hi); font: 600 8.5pt var(--mono); } }
+@page front { @top-right { content: none; } @bottom-center { content: counter(page, upper-roman); } }
+
+html { font-family: var(--sans); font-size: 10.2pt; color: var(--ink); line-height: 1.78; }
+body { margin: 0; }
+p { margin: 0 0 0.62em; text-align: justify; text-indent: 2em; orphans: 2; widows: 2; }
+p.noindent, li p, td p, .card p, figcaption, .lead { text-indent: 0; }
+a { color: inherit; text-decoration: none; }
+b, strong { font-weight: 700; color: #0b1020; }
+em { font-style: normal; color: var(--cyan); font-weight: 600; }
+small { font-size: 0.82em; color: var(--soft); }
+.mono, code { font-family: var(--mono); font-size: 0.88em; }
+code { background: #eef2f8; padding: 0 0.3em; border-radius: 3px; }
+.small { font-size: 0.82em; }
+
+/* ───── 封面 ───── */
+.cover { page: cover; position: relative; width: 210mm; height: 297mm; background: var(--space); color: #e8ecf6; overflow: hidden; break-after: page; }
+.cover .art { position: absolute; inset: 0; }
+.cover .art img { width: 100%; height: 100%; object-fit: cover; }
+.cover .art .placeholder { width: 100%; height: 100%; background: radial-gradient(ellipse at 50% 58%, #1a3f6b 0%, #120d33 42%, #05060a 75%); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 30mm; box-sizing: border-box; border: 0; color: #6f7a96; }
+.cover .veil { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5, 6, 10, 0.92) 0%, rgba(5, 6, 10, 0.45) 34%, rgba(5, 6, 10, 0) 52%, rgba(5, 6, 10, 0.2) 78%, rgba(5, 6, 10, 0.94) 100%); }
+.cover .head { position: absolute; top: 18mm; left: 18mm; right: 18mm; font: 500 8.6pt var(--sans); letter-spacing: 0.22em; color: #9fb0d0; display: flex; justify-content: space-between; }
+.cover .title { position: absolute; top: 34mm; left: 0; right: 0; text-align: center; }
+.cover .title .zh { font: 900 68pt/1.05 var(--serif); letter-spacing: 0.16em; color: #f4f6fb; text-shadow: 0 0 24px rgba(63, 242, 230, 0.35); margin-left: 0.16em; }
+.cover .title .sub { margin-top: 5mm; font: 800 19pt var(--serif); letter-spacing: 0.3em; color: var(--gold-hi); }
+.cover .title .en { margin-top: 3mm; font: 500 8.5pt var(--mono); letter-spacing: 0.42em; color: var(--cyan-hi); }
+.cover .slogan { position: absolute; bottom: 47mm; left: 0; right: 0; text-align: center; font: 600 12.5pt var(--serif); letter-spacing: 0.12em; color: #dfe6f5; }
+.cover .meta { position: absolute; bottom: 16mm; left: 18mm; right: 18mm; display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; }
+.cover .meta div { border-top: 0.6pt solid rgba(63, 242, 230, 0.55); padding-top: 2mm; font: 7.6pt/1.5 var(--sans); color: #aeb9d2; }
+.cover .meta b { display: block; color: #f2f5fb; font: 700 9pt var(--sans); }
+.cover .ai-badge { top: auto; bottom: 4mm; right: 5mm; }
+
+/* ───── 前言、目录 ───── */
+.front { page: front; }
+.toc { break-after: page; }
+.toc ol { list-style: none; margin: 0; padding: 0; }
+.toc li { display: flex; align-items: baseline; margin: 0; }
+.toc li.l1 { font: 700 10.6pt var(--serif); margin-top: 3.2mm; }
+.toc li.l2 { font: 9.4pt var(--sans); padding-left: 7mm; color: #2b3245; }
+.toc li a { flex: 1; display: flex; align-items: baseline; gap: 2mm; }
+.toc li a .dots { flex: 1; border-bottom: 0.8pt dotted #b5bccb; transform: translateY(-1mm); }
+.toc li a .pg { font: 600 9pt var(--mono); color: var(--cyan); min-width: 7mm; text-align: right; }
+
+/* ───── 标题 ───── */
+h1, h2, h3, h4 { font-family: var(--serif); font-weight: 900; color: #0b1020; line-height: 1.35; break-after: avoid; }
+h1 { string-set: chapter content(text); }
+.opener { page: opener; break-before: page; break-after: page; width: 210mm; height: 297mm; position: relative; background: var(--space); color: #f1f4fb; overflow: hidden; }
+.opener .bg { position: absolute; inset: 0; }
+.opener .bg img { width: 100%; height: 100%; object-fit: cover; opacity: 0.9; }
+.opener .bg .placeholder { width: 100%; height: 100%; border: 0; background: radial-gradient(circle at 70% 40%, #20306a 0%, #120d33 40%, #05060a 80%); }
+.opener .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(5, 6, 10, 0.96) 0%, rgba(5, 6, 10, 0.78) 48%, rgba(5, 6, 10, 0.12) 100%); }
+.opener .num { position: absolute; left: 20mm; top: 62mm; font: 900 96pt/1 var(--mono); color: transparent; -webkit-text-stroke: 1.2pt var(--cyan-hi); letter-spacing: -0.02em; }
+.opener h1.t { position: absolute; left: 20mm; top: 102mm; margin: 0; font: 900 34pt/1.25 var(--serif); letter-spacing: 0.08em; color: #f6f8fc; }
+.opener .k { position: absolute; left: 20.5mm; top: 122mm; font: 600 8.6pt var(--mono); letter-spacing: 0.32em; color: var(--gold-hi); }
+.opener .d { position: absolute; left: 20mm; top: 134mm; width: 106mm; font: 400 10.4pt/1.9 var(--sans); color: #c8d2e6; }
+.opener .d p { text-indent: 0; text-align: left; }
+.opener .ai-badge { top: auto; bottom: 26mm; right: 8mm; }
+h1.plain { font-size: 20pt; margin: 0 0 6mm; padding-bottom: 2.4mm; border-bottom: 1.4pt solid var(--ink); break-before: page; }
+h2 { font-size: 14.6pt; margin: 7mm 0 3mm; padding-left: 3.6mm; border-left: 3pt solid var(--cyan); }
+h2 .no { font-family: var(--mono); color: var(--cyan); margin-right: 2.4mm; font-weight: 700; }
+h3 { font-size: 11.4pt; margin: 5mm 0 2mm; color: #1c2438; }
+h3::before { content: '◆'; color: var(--gold); font-size: 0.7em; margin-right: 1.6mm; vertical-align: 0.12em; }
+h4 { font-size: 10.4pt; margin: 3mm 0 1mm; }
+
+/* ───── 段落组件 ───── */
+.lead { font: 500 11.2pt/1.85 var(--serif); color: #1f2a44; border-left: 2pt solid var(--gold); padding: 1mm 0 1mm 4mm; margin: 2mm 0 5mm; }
+ul, ol { margin: 0 0 0.8em; padding-left: 1.6em; }
+li { margin: 0.18em 0; }
+.key { background: linear-gradient(135deg, #f1fbfa 0%, #f6f4fd 100%); border: 0.6pt solid #bfe4e1; border-left: 3pt solid var(--cyan); border-radius: 2mm; padding: 3mm 4mm; margin: 3mm 0 4mm; break-inside: avoid; }
+.key > b:first-child { display: block; font: 800 9.6pt var(--serif); color: #0a6f69; letter-spacing: 0.06em; margin-bottom: 1mm; }
+.key p { text-indent: 0; margin-bottom: 0.3em; }
+.warn { background: #fff8ec; border: 0.6pt solid #f0d7a4; border-left: 3pt solid var(--gold); border-radius: 2mm; padding: 2.6mm 4mm; margin: 3mm 0; font-size: 0.94em; break-inside: avoid; }
+.warn p { text-indent: 0; }
+
+/* 数字指标 */
+.metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2.4mm; margin: 3mm 0 5mm; break-inside: avoid; }
+.metrics.three { grid-template-columns: repeat(3, 1fr); }
+.metric { background: var(--space); color: #e9eef9; border-radius: 2mm; padding: 3mm 3.4mm 2.6mm; position: relative; overflow: hidden; }
+.metric::after { content: ''; position: absolute; right: -6mm; top: -6mm; width: 18mm; height: 18mm; border: 0.6pt solid rgba(63, 242, 230, 0.35); border-radius: 50%; }
+.metric b { display: block; font: 700 17pt/1.15 var(--mono); color: var(--cyan-hi); }
+.metric b small { font-size: 0.5em; color: #9fb0d0; margin-left: 0.6mm; }
+.metric span { font: 8pt/1.45 var(--sans); color: #aab6cf; }
+
+/* 规格卡（类似芯片数据手册） */
+.spec { border: 0.8pt solid #2c3550; border-radius: 1.6mm; margin: 3mm 0 5mm; break-inside: avoid; overflow: hidden; }
+.spec .bar { background: #0d1224; color: var(--cyan-hi); font: 700 8.2pt var(--mono); letter-spacing: 0.16em; padding: 1.6mm 3.6mm; display: flex; justify-content: space-between; }
+.spec .bar span { color: var(--gold-hi); }
+.spec dl { display: grid; grid-template-columns: 34mm 1fr; margin: 0; font-size: 8.9pt; }
+.spec dt { background: #f2f5fa; padding: 1.3mm 3mm; font: 600 8.4pt var(--mono); color: #26304a; border-top: 0.4pt solid var(--line); }
+.spec dd { margin: 0; padding: 1.3mm 3.6mm; border-top: 0.4pt solid var(--line); line-height: 1.6; }
+
+/* 表格 */
+table { width: 100%; border-collapse: collapse; margin: 2.6mm 0 5mm; font-size: 8.8pt; line-height: 1.55; }
+thead { display: table-header-group; }
+th { background: #0d1224; color: #dfe8fa; font: 700 8.4pt var(--sans); text-align: left; padding: 1.6mm 2.2mm; border: 0; }
+th:first-child { border-left: 2pt solid var(--cyan-hi); }
+td { padding: 1.4mm 2.2mm; border-bottom: 0.4pt solid var(--line); vertical-align: top; }
+tbody tr:nth-child(even) td { background: #f7f9fc; }
+tr { break-inside: avoid; }
+td.num { font-family: var(--mono); font-weight: 600; color: #0a6f69; white-space: nowrap; }
+table.registry { font-size: 7.4pt; }
+table.registry td { padding: 1mm 1.6mm; }
+.conf { display: inline-block; padding: 0 1.4mm; border-radius: 2mm; font: 700 7pt var(--sans); white-space: nowrap; }
+.c-实证 { background: #dff7ef; color: #087a52; }
+.c-估计 { background: #e3effd; color: #1c5fb3; }
+.c-推测 { background: #f2e9fd; color: #6c35b8; }
+.c-争议 { background: #fdeee5; color: #b5521d; }
+.c-示意 { background: #eceff4; color: #4a5266; }
+
+/* 公式 */
+.katex-display { margin: 2.6mm 0 3.4mm; padding: 2.4mm 0; background: linear-gradient(90deg, transparent, #f3f7fc 18%, #f3f7fc 82%, transparent); border-top: 0.4pt solid #dbe4f0; border-bottom: 0.4pt solid #dbe4f0; }
+.katex { font-size: 1.06em; }
+.eqn { position: relative; break-inside: avoid; }
+.eqn .tag { position: absolute; right: 0; top: 50%; transform: translateY(-50%); font: 600 8.4pt var(--mono); color: var(--soft); }
+.where { font-size: 0.9em; color: #36405a; margin-top: -1mm; }
+.where p { text-indent: 0; margin: 0.2em 0; }
+
+/* 代码 */
+pre { background: #0b0f1d; color: #cfe3ff; font: 7.8pt/1.6 var(--mono); padding: 3mm 4mm; border-radius: 2mm; border-left: 2.4pt solid var(--cyan-hi); white-space: pre-wrap; margin: 2.6mm 0 4mm; break-inside: avoid; }
+pre .c { color: #6f7f9f; }
+pre .k { color: var(--gold-hi); }
+pre .s { color: #8ff0c0; }
+
+/* 图 */
+figure { margin: 3mm 0 5mm; break-inside: avoid; position: relative; text-align: center; }
+figure img { max-width: 100%; max-height: 118mm; display: block; margin: 0 auto; border-radius: 1.2mm; }
+figure.wide img { width: 100%; max-height: 160mm; object-fit: contain; }
+figure.half { width: 49%; display: inline-block; vertical-align: top; margin-right: 1%; }
+figure.dark img { background: var(--space); box-shadow: 0 0 0 0.6pt #23305a; }
+figcaption { font-size: 8.4pt; color: #3a4460; margin-top: 1.8mm; line-height: 1.6; text-align: center; }
+figcaption > b { font-family: var(--mono); color: var(--cyan); margin-right: 2mm; }
+.fig-note { display: block; font-size: 7.6pt; color: #6a7390; margin-top: 0.6mm; }
+.ai-note { display: block; font-size: 7.2pt; color: #8a6a2a; margin-top: 0.5mm; }
+.ai-badge { position: absolute; top: 2mm; right: 2mm; background: rgba(5, 6, 10, 0.78); color: var(--gold-hi); font: 700 7pt var(--sans); letter-spacing: 0.1em; border: 0.5pt solid var(--gold-hi); border-radius: 1mm; padding: 0.4mm 1.6mm; }
+.placeholder { border: 0.8pt dashed #8a93a8; border-radius: 1.6mm; height: 60mm; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1mm; background: repeating-linear-gradient(45deg, #f4f6fa 0 6px, #eef1f7 6px 12px); color: #5d6680; font-size: 9pt; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
+.grid2 figure { margin: 0 0 3mm; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2.4mm; }
+.grid3 figure { margin: 0 0 2mm; }
+.grid3 figure img, .grid2 figure img { max-height: 70mm; }
+
+/* 架构图（内联 SVG） */
+.diagram { margin: 3mm 0 5mm; break-inside: avoid; }
+.diagram svg { width: 100%; height: auto; display: block; }
+
+/* 参考文献 */
+.refs { counter-reset: none; }
+.ref { display: grid; grid-template-columns: 11mm 1fr; gap: 0 2mm; margin: 0 0 3.6mm; break-inside: avoid; font-size: 8.9pt; }
+.ref .n { font: 700 9pt var(--mono); color: var(--cyan); }
+.ref .cite-line { font-weight: 600; color: #0e1428; }
+.ref .cite-line i { font-style: italic; }
+.ref .what { color: #2b3348; margin-top: 0.6mm; }
+.ref .how { color: #0a6f69; margin-top: 0.4mm; }
+.ref .how::before { content: '本作品中 ▸ '; font-weight: 700; }
+.ref .what p, .ref .how p { text-indent: 0; margin: 0; }
+sup.cite { font: 600 6.6pt var(--mono); color: var(--cyan); margin-left: 0.3mm; }
+
+/* 名词解释附录 */
+.gl-list { column-count: 2; column-gap: 6mm; }
+.gl { break-inside: avoid; margin-bottom: 3mm; font-size: 8.5pt; line-height: 1.6; }
+.gl h4 { font-size: 9.6pt; margin: 0 0 0.6mm; color: #0b1020; }
+.gl h4 small { font-family: var(--sans); font-weight: 400; margin-left: 1.6mm; }
+.gl p { text-indent: 0; margin: 0 0 0.4mm; }
+.gl .brief { color: #0a6f69; font-weight: 600; }
+.gl .use b { color: var(--gold); margin-right: 1.2mm; }
+.gl .gref { font-size: 7.4pt; color: #7a829a; }
+
+/* 签字与声明 */
+.sign { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4mm; margin-top: 6mm; }
+.sign div { border-bottom: 0.6pt solid var(--ink); height: 12mm; font-size: 8pt; color: var(--soft); display: flex; align-items: flex-end; }
+.todo { background: #fff3cf; color: #7a5300; padding: 0 1mm; border-radius: 1mm; font-weight: 600; }
+.pagebreak { break-before: page; }
+.center { text-align: center; text-indent: 0; }
+.tagline { font: 600 9pt var(--mono); letter-spacing: 0.2em; color: var(--cyan); margin-bottom: 1mm; text-indent: 0; }

@@ -45,7 +45,7 @@ const esc = (s: string) => s.replace(/\|/g, '\\|').replace(/\n/g, ' ');
     for (const l of lines) md += `- ${l.text}（${(l.ms / 1000).toFixed(1)} 秒）\n`;
     md += '\n';
   };
-  sec(`${ACTS.hall.no} · ${ACTS.hall.title}`, [...SCRIPT.prologue, SCRIPT.prologueCalibrated('观测员', '星辰、元素、生命三环'), SCRIPT.prologueStart(2026)]);
+  sec(`${ACTS.hall.no} · ${ACTS.hall.title}`, [...SCRIPT.prologue, SCRIPT.prologueCalibrated('观测员', '星辰、元素、生命'), SCRIPT.prologueStart(2026)]);
   sec(`${ACTS.origin.no} · ${ACTS.origin.title}`, [...SCRIPT.origin, SCRIPT.originSealed, SCRIPT.originStars]);
   sec(`${ACTS.stars.no} · ${ACTS.stars.title}`, [...SCRIPT.stars, SCRIPT.starsDefault, SCRIPT.starsFix]);
   sec(`${ACTS.elements.no} · ${ACTS.elements.title}`, [...SCRIPT.elements, SCRIPT.elementsDefault, SCRIPT.elementsFix, SCRIPT.elementsQuote]);

@@ -4,15 +4,31 @@ import { h, clear } from './dom';
 import { PARAM_INDEX } from '../data/params';
 import { KEY_NAMES, type KeyId, type Verdict } from '../sim/types';
 import { confidenceChip } from './overlays';
+import { chevron, isOpen, onFoldAll, remember } from './fold';
 
 export class Panel {
   readonly el = h('aside', { class: 'panel', 'aria-label': '实验舱仪器面板', hidden: true });
+  private minBtn: HTMLButtonElement;
+
+  constructor() {
+    this.minBtn = h('button', { type: 'button', class: 'fold-btn', onclick: () => this.setMin(!this.el.classList.contains('min'), true) }, chevron()) as HTMLButtonElement;
+    this.setMin(!isOpen('panel', true));
+    onFoldAll((open) => this.setMin(!open, true));
+  }
+
+  /** 收起时只保留标题、推演结论与“下一幕”按钮。 */
+  setMin(min: boolean, user = false): void {
+    this.el.classList.toggle('min', min);
+    this.minBtn.title = min ? '展开面板' : '收起面板（H 键收起全部）';
+    this.minBtn.setAttribute('aria-expanded', String(!min));
+    if (user) remember('panel', !min);
+  }
 
   open(head: { no: string; title: string; layer: string }, ...body: (Node | null | false)[]): void {
     clear(this.el);
     this.el.append(
-      h('div', { class: 'ph' }, h('span', {}, `实验舱 · ${head.no}`), h('em', {}, head.layer)),
-      h('h3', {}, head.title),
+      h('div', { class: 'ph' }, h('span', {}, `实验舱 · ${head.no}`), h('em', {}, head.layer), this.minBtn),
+      h('h3', { onclick: () => this.el.classList.contains('min') && this.setMin(false, true) }, head.title),
       ...(body.filter(Boolean) as Node[]),
     );
     this.el.hidden = false;
@@ -115,8 +131,34 @@ export function verdictBox(): { el: HTMLElement; set: (v: Verdict | null, extra?
   };
 }
 
+/** 可折叠的分节，默认展开。观众的选择按标题记住。 */
 export function section(title: string, ...children: (Node | null | false)[]): HTMLElement {
-  return h('div', { class: 'sec' }, h('b', {}, title), ...(children.filter(Boolean) as Node[]));
+  return foldable(title, true, children);
+}
+
+/** 可折叠的分节，默认收起：用于次要信息（长列表、读数表、辅助图表）。 */
+export function folded(title: string, ...children: (Node | null | false)[]): HTMLElement {
+  return foldable(title, false, children);
+}
+
+/** 程序展开某个分节（例如选中聚落时展开档案）。 */
+export function openSection(el: HTMLElement | null | undefined): void {
+  const sec = el?.closest('.sec');
+  if (sec?.classList.contains('shut')) (sec.querySelector('.sec-head') as HTMLButtonElement | null)?.click();
+}
+
+function foldable(title: string, fallback: boolean, children: (Node | null | false)[]): HTMLElement {
+  const id = `sec:${title}`;
+  const open = isOpen(id, fallback);
+  const inner = h('div', { class: 'sec-in' }, ...(children.filter(Boolean) as Node[]));
+  const head = h('button', { type: 'button', class: 'sec-head', 'aria-expanded': String(open) }, h('b', {}, title), chevron()) as HTMLButtonElement;
+  const el = h('div', { class: open ? 'sec' : 'sec shut' }, head, h('div', { class: 'sec-body' }, inner));
+  head.addEventListener('click', () => {
+    const now = el.classList.toggle('shut');
+    head.setAttribute('aria-expanded', String(!now));
+    remember(id, !now);
+  });
+  return el;
 }
 
 export function button(label: string, onclick: () => void, kind: '' | 'primary' | 'ghost' | 'danger' = ''): HTMLButtonElement {

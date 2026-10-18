@@ -4,3 +4,9 @@ assets-src/
 *.log
 .DS_Store
 .claude/
+video/out/
+video/node_modules/
+video/.tts.env
+docs/submission/out/
+docs/assets/gpt/raw/
+docs/submission/tech/out/

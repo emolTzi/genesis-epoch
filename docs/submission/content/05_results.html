@@ -1,0 +1,53 @@
+<chapter id="c5" no="05" title="验证与成果" en="VALIDATION · RESULTS" art="09_butterfly">
+<p>作品中的每一个数字都可以追溯到一行代码、一篇文献和一项测试。本章报告模型验证、关键数值、性能实测与完成情况。</p>
+</chapter>
+
+<h2 id="s5-1"><span class="no">5.1</span>模型验证</h2>
+<table>
+<thead><tr><th style="width:26%">验证项</th><th>方法</th><th style="width:28%">结果</th></tr></thead>
+<tbody>
+<tr><td>辐射平衡温度</td><td>地球参数代入式 (2-1)，与教科书值比对</td><td class="num">254.6 K（教科书约 255 K）</td></tr>
+<tr><td>保守宜居带</td><td>按 Kopparapu 等人的有效辐照度边界计算太阳宜居带</td><td class="num">0.993–1.676 AU</td></tr>
+<tr><td>恒温器负反馈</td><td>恒星变亮 +20 K 扰动实验</td><td class="num">升温 9.7 K（无反馈 20 K）</td></tr>
+<tr><td>K-Pg 标定</td><td>4 万点蒙特卡洛 + 二分标定</td><td class="num">13.0%（文献约 13%）</td></tr>
+<tr><td>Lorenz 增长率</td><td>对数线性拟合差异增长</td><td class="num">0.898（文献约 0.906）</td></tr>
+<tr><td>未来模型</td><td>解析解与 4 000 次蒙特卡洛比对</td><td class="num">一致（单元测试）</td></tr>
+<tr><td>微观–宏观一致性</td><td>两模型存活率随合作程度的变化方向</td><td class="num">均单调上升（单元测试）</td></tr>
+<tr><td>可复现性</td><td>同编号、同参数、同干预日志推演两次逐位比对；回溯重放</td><td class="num">完全一致（单元测试）</td></tr>
+<tr><td>校验闸门</td><td>逐条构造违规提议</td><td class="num">全部被拒绝（单元测试）</td></tr>
+</tbody>
+</table>
+
+<h2 id="s5-2"><span class="no">5.2</span>关键数值</h2>
+<p>作品界面、演示视频与本文中引用的全部数字均以下表为准；下表由 <code>npm run docs</code> 调用引擎自动生成。</p>
+<!--KEYVALUES-->
+
+<h2 id="s5-3"><span class="no">5.3</span>性能与兼容性</h2>
+<table>
+<thead><tr><th>测试环境</th><th>场景</th><th>结果</th></tr></thead>
+<tbody>
+<tr><td>开发机（独立显卡），Edge，1600×900，高画质</td><td>第⑤幕沙盘，电力时代，阴影、上万棵树、数千栋建筑同时开启</td><td class="num">约 59 fps</td></tr>
+<tr><td>开发机（独立显卡），中画质</td><td>实验大厅与各幕</td><td class="num">约 140 fps</td></tr>
+<tr><td>集成显卡笔记本 / 手机</td><td>全流程</td><td><span class="todo">【待团队实测填写】</span></td></tr>
+</tbody>
+</table>
+
+<h2 id="s5-4"><span class="no">5.4</span>完成情况</h2>
+<table>
+<thead><tr><th>内容</th><th style="width:22%">状态</th></tr></thead>
+<tbody>
+<tr><td>实验大厅、实时程序化行星、文明墓园、认知校准、宇宙编号</td><td>已完成</td></tr>
+<tr><td>第①–⑤幕场景、标志性交互、顿悟解锁；宇宙尺度连续缩放</td><td>已完成</td></tr>
+<tr><td>第⑤幕微观文明沙盘（程序化地形、植被、城市、昼夜、国界）：实时调参、回溯、六种干预、核危机抉择、事件流、聚落档案、平行宇宙抽样</td><td>已完成</td></tr>
+<tr><td>终章：万宇宙、揭示地球、未来参量、历史合力、未来之钥、留言、海报</td><td>已完成</td></tr>
+<tr><td>参数台、文明链条实时读数、大厅宇宙仪表；70 条名词注释与双击跳转</td><td>已完成</td></tr>
+<tr><td>观测者·零号离线模式（规则解析、预置回答、校验闸门、沙盒推演）</td><td>已完成</td></tr>
+<tr><td>观测者·零号在线模式（OpenAI 兼容接口）</td><td>已实现，待接入真实服务验证</td></tr>
+<tr><td>63 项单元测试；单文件离线构建；在线版持续部署</td><td>已完成</td></tr>
+<tr><td>演示视频</td><td>已完成初版，配音待团队录制后更新</td></tr>
+<tr><td>理科与思政审校、不少于 20 人的用户测试</td><td><span class="todo">【待团队完成】</span></td></tr>
+</tbody>
+</table>
+
+<h2 id="s5-5"><span class="no">5.5</span>用户测试</h2>
+<p class="noindent"><span class="todo">【待填：按 docs/用户测试方案.md 完成不少于 20 人的测试后，填写参与者构成、任务完成率、理解度前后测、满意度与主要反馈，并附原始问卷。】</span></p>

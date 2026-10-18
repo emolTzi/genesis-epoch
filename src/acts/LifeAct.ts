@@ -1,4 +1,4 @@
-// 第④幕 · 鳞潜羽翔（L3 生命）：生命史、K-Pg 撞击点轮盘、劳动与人类起源。
+// 第④幕 · 演化与大灭绝（L3 生命）：生命史、K-Pg 撞击点轮盘、劳动与人类起源。
 
 import * as THREE from 'three';
 import { Act } from './Act';
@@ -8,9 +8,8 @@ import { SCRIPT } from '../data/script';
 import { Impactor } from '../render/Impactor';
 import { hazardSite, isHazard, randomSafeSite, latLon, type Vec3 } from '../sim/kpg';
 import { h } from '../ui/dom';
-import { button, section, stateChip, verdictBox } from '../ui/panel';
+import { button, section, stateChip, verdictBox, folded } from '../ui/panel';
 import { ease } from '../core/tween';
-import { lookFromClimate } from './ElementsAct';
 import { THEORY } from '../data/theory';
 
 interface Milestone {
@@ -54,7 +53,8 @@ export class LifeAct extends Act {
     }
     app.sky.setMood(0x10203a, 0x0a2f2a, 0.8);
     app.audio.setMood('life');
-    app.planet.setLook({ ...lookFromClimate(app.state.report.L2), life: 0, city: 0, dead: 0, earth: 0, hazard: 0, scar: 0 }, prev !== 'elements');
+    const hasHazard = app.state.has('life') && app.state.mode === 'free';
+    app.planet.setLook({ earth: 1, life: 0.96, city: 0.16, sea: 1, ice: 0.1, cloud: 0.38, scorch: 0, dead: 0, hazard: hasHazard ? 1 : 0, scar: 0 }, prev !== 'elements');
     app.planet.spinRate = 0.06;
     if (prev !== 'elements') {
       void this.dir.clearStage([app.planetFade], 900);
@@ -126,7 +126,7 @@ export class LifeAct extends Act {
     app.panel.open(
       this.meta,
       h('p', {}, '三十多亿年里，生命从海洋走上陆地。六千六百万年前，一颗小行星飞向地球，它落在哪里，决定了人类能否登场。'),
-      section('生命史（真实地球）', this.histEl),
+      folded('生命史（真实地球）', this.histEl),
       section('K-Pg 撞击点轮盘', this.resultEl,
         h('div', { class: 'btns' },
           has ? button('落在真实的历史位置', () => void this.strike(hazardSite(0), true)) : null,

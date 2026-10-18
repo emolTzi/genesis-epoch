@@ -11,7 +11,9 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "docs": "tsx scripts/gen-docs.ts",
-    "fonts": "python scripts/build-fonts.py"
+    "fonts": "python scripts/build-fonts.py",
+    "video": "npm run build && node video/render.mjs",
+    "video:preview": "npm run build && node video/render.mjs --preview --from 0 --to 120 --every 30"
   },
   "dependencies": {
     "three": "^0.186.1"

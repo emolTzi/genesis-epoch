@@ -1,0 +1,67 @@
+<chapter id="t1" no="01" title="技术概览" en="OBJECTIVES · STACK · CODEBASE" art="10_tech">
+<p>四条互相牵制的工程约束塑造了全部技术选型：<b>单文件离线</b>、<b>确定性可复现</b>、<b>实时 3D</b>、<b>可核验</b>。本章说明这四条约束如何落地，并给出代码规模、目录职责与构建流水线。</p>
+</chapter>
+
+<h2 id="t1-1"><span class="no">1.1</span>设计目标与工程约束</h2>
+
+<table>
+<thead><tr><th style="width:16%">约束</th><th style="width:42%">要求</th><th>实现手段</th></tr></thead>
+<tbody>
+<tr><td>单文件离线</td><td>展厅与机房的电脑可能没有网络、也不允许安装软件；评委双击文件就要能跑</td><td>Vite + <code>vite-plugin-singlefile</code> 把脚本、样式、字体子集、NASA 影像与 worker 全部内联进一个 HTML；运行时零网络请求</td></tr>
+<tr><td>确定性可复现</td><td>同一宇宙编号、同一组参量必须得到同一部编年史，评委可交叉核对</td><td>模拟层全部为纯函数；随机数按“宇宙编号 + 用途”派生子流（<code>core/rng.ts</code>）；沙盘回溯采用从头确定性重放，而不是快照回滚</td></tr>
+<tr><td>实时 3D</td><td>桌面集成显卡上稳定可看；展厅大屏可无人值守循环</td><td>程序化着色器代替贴图与模型；粒子按画质档位缩放；帧率连续两次低于 38 自动降档；离屏暂停渲染</td></tr>
+<tr><td>可核验</td><td>界面上显示的、引擎算出的、文档里写的必须是同一组数字</td><td>单一参数注册表驱动滑杆、判定、LLM 校验与文档生成；<code>npm run docs</code> 重算并重排文档数据</td></tr>
+</tbody>
+</table>
+
+<p>四条约束之间存在真实冲突：程序化渲染省掉了贴图体积，却把成本转移到着色器编译与逐像素计算；确定性重放省掉了快照内存，却要求每次回溯都从头跑一遍沙盘。第 2.5 节与第 2.10 节分别说明这两处取舍的量化结果。</p>
+
+<h2 id="t1-2"><span class="no">1.2</span>技术栈与依赖边界</h2>
+
+<table>
+<thead><tr><th style="width:22%">层面</th><th style="width:34%">选型</th><th>理由与边界</th></tr></thead>
+<tbody>
+<tr><td>语言</td><td>TypeScript（严格模式，<code>tsc --noEmit</code> 作为构建闸门）</td><td>模拟层是纯函数集合，类型即文档；严格模式在编译期拦住单位与空值错误</td></tr>
+<tr><td>构建</td><td>Vite 8 + <code>vite-plugin-singlefile</code></td><td>产物只有一个 HTML；开发期保留 HMR，构建期内联全部资源</td></tr>
+<tr><td>渲染</td><td>three.js（WebGL2）</td><td>直接使用引擎自带能力，不引入后处理框架：Bloom 用自带 <code>UnrealBloomPass</code>，动画用自写补间调度器</td></tr>
+<tr><td>测试</td><td>Vitest</td><td>与 Vite 共用转换管线，测试可直接 import 模拟层源码，不需要打包</td></tr>
+<tr><td>文档生成</td><td>tsx + 自写脚本（<code>scripts/gen-docs.ts</code>）</td><td>从注册表与引擎重新计算并生成参数表、关键数值、旁白文稿，避免文档与代码漂移</td></tr>
+<tr><td>智能层</td><td>OpenAI 兼容的 <code>chat/completions</code>（可选）</td><td>只负责“把自然语言翻译成参数提议”，不参与数值计算；无网络时由规则引擎兜底</td></tr>
+</tbody>
+</table>
+
+<p><b>依赖边界</b>是本文反复强调的一条工程纪律：<code>sim/</code> 不 import <code>three</code>，也不触碰 DOM；<code>llm/</code> 不 import <code>sim/</code> 的计算函数，只能提交“提议”；<code>render/</code> 只读状态，不修改状态。三处边界由 ESLint 之外的物理手段保证——模拟层的单元测试在 Node 环境下直接运行，一旦误引 three 或 DOM，测试会立刻报错。</p>
+
+<h2 id="t1-3"><span class="no">1.3</span>代码组织与规模</h2>
+
+<table class="kv">
+<thead><tr><th>目录</th><th>文件</th><th>行数</th><th>职责</th></tr></thead>
+<tbody>
+<tr><td class="mono">src/sim/</td><td>14</td><td>2 518</td><td>确定性推演：公式、逐层判定、恒温器、K-Pg、文明动力学与 ABM、未来模型、蒙特卡洛、Lorenz、因果图</td></tr>
+<tr><td class="mono">src/render/</td><td>14</td><td>3 509</td><td>Three.js 场景：程序化行星、宇宙网、银河系、恒星系、撞击体、文明沙盘地形与城市、万宇宙</td></tr>
+<tr><td class="mono">src/acts/</td><td>8</td><td>2 425</td><td>序章与五幕、终章的场景、仪器面板、顿悟卡与导览脚本</td></tr>
+<tr><td class="mono">src/ui/</td><td>13</td><td>2 259</td><td>顶栏与文明链条、仪器面板、弹窗、观测档案、墓园、设置、参数台、名词注释</td></tr>
+<tr><td class="mono">src/data/</td><td>8</td><td>1 366</td><td>参数注册表、理论库、知识卡、旁白、离线问答、编年史片段、术语表</td></tr>
+<tr><td class="mono">src/app/</td><td>3</td><td>682</td><td>全局状态、应用总装、章节导演</td></tr>
+<tr><td class="mono">src/llm/</td><td>4</td><td>397</td><td>Provider 抽象、意图解析、校验闸门、检索增强、离线兜底</td></tr>
+<tr><td class="mono">src/audio/</td><td>1</td><td>208</td><td>Web Audio 生成式声音与语音播报</td></tr>
+<tr><td class="mono">src/core/</td><td>4</td><td>171</td><td>事件总线、随机数、补间、存储</td></tr>
+</tbody>
+</table>
+<p class="small">统计口径：<code>src/</code> 下的 <code>.ts</code>/<code>.css</code> 文件，含空行与注释，2026-10-18 版本；共 69 个文件、13 535 行。测试代码在 <code>tests/</code>，不在此表内。</p>
+
+<h2 id="t1-4"><span class="no">1.4</span>构建、打包与交付形态</h2>
+
+<pre class="mono small">npm install        # 仅 1 个运行时依赖（three），其余为构建与测试工具
+npm test           # 63 项单元测试
+npm run build      # tsc --noEmit &amp;&amp; vite build → dist/index.html（单文件，1.67 MB）
+npm run docs       # 从注册表重算并重新生成数据类文档</pre>
+
+<p>构建管线有三处值得说明的细节：</p>
+<ol>
+<li><b>字体子集化</b>：<code>scripts/build-fonts.py</code> 扫描源码中实际出现的字符，把思源宋体压到约 416 KB、JetBrains Mono 压到约 30 KB，再以 data URI 内联；这是单文件体积能控制在 1.7 MB 的关键。</li>
+<li><b>worker 内联</b>：文明沙盘的微观抽样跑在 Web Worker 里，构建时把 worker 源码编译成字符串并以 Blob URL 注入，避免额外的 <code>.js</code> 请求。</li>
+<li><b>影像内联</b>：终章使用的 NASA 公有领域地球昼夜影像预先压成两张小尺寸纹理，同样以 data URI 内联。</li>
+</ol>
+
+<p>交付形态因此收敛为“一个 HTML + 一份许可证目录”：拷到任何一台装有新版 Chrome 或 Edge 的电脑，双击即可运行，不需要服务器、不需要联网、不需要安装运行时。</p>

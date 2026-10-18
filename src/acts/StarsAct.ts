@@ -1,4 +1,4 @@
-// 第②幕 · 日月盈昃（L1 天体）：从宇宙网潜入银河系，再潜入恒星系；宜居带与平衡温度。
+// 第②幕 · 宜居带（L1 天体）：从宇宙网潜入银河系，再潜入恒星系；宜居带与平衡温度。
 
 import * as THREE from 'three';
 import { Act } from './Act';
@@ -8,7 +8,7 @@ import { StarSystem } from '../render/StarSystem';
 import { SCRIPT, type ActId } from '../data/script';
 import { evalL1, fmt } from '../sim/universe';
 import { h } from '../ui/dom';
-import { button, paramSlider, readouts, section, stateChip, verdictBox, type SliderHandle } from '../ui/panel';
+import { button, paramSlider, readouts, section, stateChip, verdictBox, type SliderHandle, folded } from '../ui/panel';
 import type { ParamValue } from '../sim/types';
 import { ease } from '../core/tween';
 
@@ -127,7 +127,7 @@ export class StarsAct extends Act {
       this.meta,
       h('p', {}, '在一条旋臂的外缘，气体坍缩成恒星，剩下的尘埃在盘中聚成行星。行星能否拥有液态水，首先取决于它离恒星多远。'),
       section('恒星与行星', ...Object.values(this.sliders).map((x) => x.el), h('div', { class: 'seg', role: 'group', 'aria-label': '大卫星' }, ...this.moonBtns)),
-      section('读数', this.read.el, h('span', { class: 'eq' }, 'T_eq = [L★(1−A)/(16πσa²)]^¼ = T★·√(R★/2a)·(1−A)^¼')),
+      folded('读数', this.read.el, h('span', { class: 'eq' }, 'T_eq = [L★(1−A)/(16πσa²)]^¼ = T★·√(R★/2a)·(1−A)^¼')),
       section('推演结论', this.verdict.el, this.checksEl),
       h('div', { class: 'btns' }, button('看一次默认推演：2.4 AU', () => void this.demo())),
       h('p', { class: 'hint' }, '画面中恒星与行星的大小经过放大，轨道距离按比例（1 AU = 2.2 个场景单位）。'),

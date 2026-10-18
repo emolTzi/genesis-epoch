@@ -1,4 +1,4 @@
-// 第③幕 · 云腾致雨（L2 行星化学）：碳–硅酸盐恒温器，失控温室与雪球行星。
+// 第③幕 · 碳–硅酸盐循环（L2 行星化学）：碳–硅酸盐恒温器，失控温室与雪球行星。
 
 import * as THREE from 'three';
 import { Act } from './Act';
@@ -9,7 +9,7 @@ import { evalL1, evalL2, fmt } from '../sim/universe';
 import type { LayerReport, ParamValue } from '../sim/types';
 import type { PlanetLook } from '../render/Planet';
 import { h, fitCanvas, COLORS, MONO_FONT } from '../ui/dom';
-import { button, paramSlider, readouts, section, verdictBox, type SliderHandle } from '../ui/panel';
+import { button, paramSlider, readouts, section, verdictBox, type SliderHandle, folded } from '../ui/panel';
 import { ease } from '../core/tween';
 import { THEORY } from '../data/theory';
 
@@ -21,6 +21,21 @@ export function lookFromClimate(l2: LayerReport): Partial<PlanetLook> {
   if (title === '永久冰封' || title === '雪球行星' || t < 260) return { scorch: 0, sea: 1, ice: 1, cloud: 0.35 };
   if (t < 273.15) return { scorch: 0, sea: 1, ice: 0.6, cloud: 0.45 };
   return { scorch: Math.max(0, (t - 330) / 40), sea: 1, ice: Math.max(0.04, Math.min(0.5, (290 - t) / 45 + 0.12)), cloud: 0.5 };
+}
+
+/** 由整份静态报告推出行星外观：哪一层断裂，行星就呈现那一层的失败模样。 */
+export function lookFromReport(r: import('../sim/universe').StaticReport): Partial<PlanetLook> {
+  const dead = { life: 0, city: 0, earth: 0, hazard: 0, scar: 0 };
+  if (r.firstFail === 0) return { ...dead, dead: 1, sea: 0.15, ice: 0, scorch: 0, cloud: 0.05 };
+  if (r.firstFail === 1) {
+    const water = r.L1.checks.find((c) => c.id === 'water')?.verdict;
+    if (water?.title === '冰封') return { ...dead, dead: 0, sea: 1, ice: 1, scorch: 0, cloud: 0.3 };
+    if (water?.title === '蒸干') return { ...dead, dead: 0, sea: 0.1, ice: 0, scorch: 1, cloud: 1 };
+    return { ...dead, dead: 0.7, sea: 0.25, ice: 0.1, scorch: 0, cloud: 0.05 };
+  }
+  if (r.firstFail === 2) return { ...dead, dead: 0, ...lookFromClimate(r.L2) };
+  if (r.firstFail === 3) return { ...lookFromClimate(r.L2), life: 0.85, city: 0, dead: 0, earth: 0, hazard: 0, scar: 0 };
+  return { ...lookFromClimate(r.L2), life: 0.85, city: 0.25, dead: 0, earth: 0, hazard: 0, scar: 0 };
 }
 
 export class ElementsAct extends Act {
@@ -40,7 +55,7 @@ export class ElementsAct extends Act {
     const app = this.app;
     app.sky.setMood(0x141a3c, 0x0a2a3a, 0.8);
     app.audio.setMood('elements');
-    app.planet.setLook({ life: 0, city: 0, dead: 0, earth: 0, hazard: 0, scar: 0, ...lookFromClimate(app.state.report.L2) }, true);
+    app.planet.setLook({ life: 0.98, city: 0.18, dead: 0, earth: 1, hazard: 0, scar: 0, cloud: 0.38, ice: 0.1, ...lookFromClimate(app.state.report.L2) }, true);
     app.planet.spinRate = 0.08;
     app.planetRoot.position.set(0, 0, 0);
     const stars = this.dir.acts.stars as import('./StarsAct').StarsAct;
@@ -81,7 +96,7 @@ export class ElementsAct extends Act {
       h('p', {}, '水能否长久保持液态，取决于一台看不见的恒温器：火山补充二氧化碳，岩石风化把它埋入海底。越热，风化越快，温度就降回来。'),
       section('行星恒温器', ...Object.values(this.sliders).map((x) => x.el),
         locked ? h('p', { class: 'hint' }, '元素之钥未解锁：先观看一次默认推演。') : null),
-      section('读数', this.read.el, h('span', { class: 'eq' }, 'W = W₀·(pCO₂/p₀)^0.3·exp((T−288 K)/13.7 K)；T = T_eq + 33 K + 3 K·log₂(pCO₂/p₀)')),
+      folded('读数', this.read.el, h('span', { class: 'eq' }, 'W = W₀·(pCO₂/p₀)^0.3·exp((T−288 K)/13.7 K)；T = T_eq + 33 K + 3 K·log₂(pCO₂/p₀)')),
       section('扰动实验：恒星变亮 +20 K', this.chart,
         h('div', { class: 'legend' }, h('span', {}, h('i', { style: `background:${COLORS.gold}` }), '有负反馈'), h('span', {}, h('i', { style: `background:${COLORS.entropy}` }), 'CO₂ 冻结不变'), h('span', {}, h('i', { style: `background:${COLORS.cyan}` }), '冰点 273 K')),
         h('p', { class: 'hint' }, '横轴为示意的时间单位（约百万年量级）。模型系数为示意取值，用来表达负反馈的方向与相对大小。')),

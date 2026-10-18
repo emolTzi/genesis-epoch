@@ -53,14 +53,15 @@ export class StarSystem {
           float g = fbm(p*8.0 + vec3(uTime*0.05));
           float mu = max(dot(normalize(vN), normalize(cameraPosition - vW)), 0.0);
           float limb = 0.4 + 0.6*pow(mu, 0.5);
-          vec3 c = uColor * (1.6 + 0.9*g) * limb;
+          vec3 c = uColor * (1.08 + 0.62*g) * limb;
           gl_FragColor = vec4(c, uOpacity);
         }
       `,
     });
     const star = new THREE.Mesh(new THREE.SphereGeometry(0.42, 64, 32), this.starMat);
     this.corona = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: this.starColor, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
-    this.corona.scale.set(2.8, 2.8, 1);
+    this.corona.scale.set(2.4, 2.4, 1);
+    (this.corona.material as THREE.SpriteMaterial).opacity = 0.72;
     this.group.add(star, this.corona, this.light);
 
     this.hzMat = new THREE.ShaderMaterial({
@@ -77,7 +78,7 @@ export class StarSystem {
           float edge = smoothstep(0.04, 0.0, abs(r-uInner)) + smoothstep(0.04, 0.0, abs(r-uOuter));
           float shimmer = 0.5 + 0.5*sin(r*18.0 - uTime*1.2);
           vec3 c = vec3(0.35, 0.95, 0.6);
-          gl_FragColor = vec4(c, (inside*(0.06 + 0.04*shimmer) + edge*0.5) * uOpacity);
+          gl_FragColor = vec4(c, (inside*(0.025 + 0.018*shimmer) + edge*0.28) * uOpacity);
         }
       `,
     });

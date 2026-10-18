@@ -1,0 +1,1339 @@
+// 演示视频的动态图形层与导演脚本。注入到作品页面中，按视频时间逐帧驱动：
+//   · 片头、问题、核心机制、结构、严谨性、架构、理论、应用、片尾等动态图形段落；
+//   · 作品自身的导览作为主线，旁白出现时自动弹出知识卡片与出处；
+//   · 模拟光标操作参数台、文明沙盘、观测者·零号、蝴蝶效应与观测档案。
+// 所有画面中的作品内容均为作品实际运行的结果。
+(() => {
+  'use strict';
+  const CFG = window.__filmConfig;
+  const FPS = CFG.fps;
+  const VW = CFG.width;
+  const VH = CFG.height;
+  const G = window.__genesis;
+  const app = G.app;
+  const dir = G.director;
+
+  /* ═══════════════ 样式 ═══════════════ */
+  const style = document.createElement('style');
+  style.textContent = `
+  #film { position: fixed; inset: 0; z-index: 2147483000; pointer-events: none; color: #e7e9f3;
+    font-family: 'Microsoft YaHei UI', 'Microsoft YaHei', 'PingFang SC', sans-serif; }
+  #film * { box-sizing: border-box; }
+  .f-bg { position: absolute; inset: 0; opacity: 0;
+    background: radial-gradient(1100px 700px at 72% 18%, rgba(120, 90, 230, 0.22), transparent 62%),
+      radial-gradient(900px 600px at 18% 86%, rgba(40, 200, 200, 0.12), transparent 60%), #04050b; }
+  .f-cv { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .f-stage, .f-slot { position: absolute; inset: 0; }
+  .f-serif { font-family: 'FilmSerif', 'GE Serif', serif; font-weight: 900; }
+  .f-mono { font-family: 'GE Mono', 'JetBrains Mono', Consolas, monospace; }
+  .f-abs { position: absolute; }
+  .f-ch { display: inline-block; will-change: transform, opacity, filter; white-space: pre; }
+  .f-gold { color: #f5c66b; } .f-cyan { color: #3ff2e6; } .f-red { color: #ff6152; } .f-violet { color: #a497ff; } .f-dim { color: #a9aeca; }
+
+  /* 字幕（与作品字幕同一风格，放大以适合视频） */
+  .f-cap { position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%); width: 800px; text-align: center; opacity: 0; }
+  .f-cap .who { font-family: 'GE Mono', monospace; font-size: 12px; letter-spacing: 0.18em; color: #3ff2e6; }
+  .f-cap .line { font-size: 24px; line-height: 1.6; color: #fff; text-shadow: 0 2px 14px #000, 0 0 3px #000; margin-top: 3px; }
+  body.film-sb .f-cap { bottom: 136px; }
+  body.film-own .subtitle { opacity: 0 !important; }
+  .subtitle .line { font-size: 23px !important; }
+  .subtitle .who { font-size: 12px !important; }
+  .guide-bar { display: none !important; }
+  body.film-spine .sb-feed { display: none !important; }
+  .toast-root .toast:nth-last-child(n+3) { display: none !important; }
+
+  /* 左侧知识卡片 */
+  .f-card { position: absolute; left: 24px; top: 438px; width: 388px; padding: 16px 18px 14px 22px; border-radius: 14px;
+    background: linear-gradient(160deg, rgba(20, 24, 50, 0.93), rgba(6, 7, 14, 0.93)); border: 1px solid rgba(150, 162, 220, 0.3);
+    box-shadow: 0 18px 50px -18px rgba(0, 0, 0, 0.9), inset 0 0 40px rgba(63, 242, 230, 0.04); overflow: hidden; }
+  .f-card .bar { position: absolute; left: 0; top: 0; width: 4px; height: 100%; transform-origin: top; }
+  .f-card .sweep { position: absolute; top: 0; bottom: 0; width: 120px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent); }
+  .f-card .kick { font-size: 12px; letter-spacing: 0.14em; color: #3ff2e6; }
+  .f-card .ttl { font-size: 25px; letter-spacing: 0.08em; line-height: 1.35; margin: 4px 0 8px; }
+  .f-card .fx { font-size: 15px; color: #f5c66b; background: rgba(245, 198, 107, 0.07); border: 1px solid rgba(245, 198, 107, 0.25);
+    border-radius: 8px; padding: 6px 10px; margin: 2px 0 8px; white-space: nowrap; overflow: hidden; }
+  .f-card .ln { font-size: 15.5px; line-height: 1.65; color: #d6d9ea; }
+  .f-card .ln::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #3ff2e6; margin: 0 8px 2px 0; vertical-align: middle; }
+  .f-card .src { font-size: 12px; color: #8d93b3; margin-top: 8px; border-top: 1px solid rgba(150, 162, 220, 0.18); padding-top: 6px; }
+  .f-card .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; }
+  .f-card .chip { font-size: 14px; padding: 3px 10px; border-radius: 999px; border: 1px solid rgba(63, 242, 230, 0.45); color: #3ff2e6; background: rgba(63, 242, 230, 0.06); }
+  .f-card .big { font-size: 76px; line-height: 1; color: #f5c66b; text-shadow: 0 0 30px rgba(245, 198, 107, 0.45); }
+
+  /* 章节卡 */
+  .f-chap { position: absolute; left: 30px; top: 440px; width: 470px; }
+  .f-chap .no { font-size: 15px; letter-spacing: 0.3em; color: #f5c66b; }
+  .f-chap .tt { font-size: 66px; letter-spacing: 0.16em; line-height: 1.2; text-shadow: 0 0 30px rgba(245, 198, 107, 0.35); }
+  .f-chap .rule { height: 2px; width: 360px; background: linear-gradient(90deg, #f5c66b, rgba(245, 198, 107, 0)); transform-origin: left; margin: 10px 0 12px; }
+  .f-chap .ly { font-size: 17px; color: #3ff2e6; letter-spacing: 0.06em; }
+  .f-chap .es { font-size: 19px; color: #e7e9f3; margin-top: 6px; }
+
+  /* 光标 */
+  .f-cursor { position: absolute; left: 0; top: 0; width: 30px; height: 30px; opacity: 0; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.7)); }
+  .f-ripple { position: absolute; width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: 50%; border: 2px solid #f5c66b; }
+  .f-hl { position: absolute; border: 2px solid #3ff2e6; border-radius: 10px; box-shadow: 0 0 22px rgba(63, 242, 230, 0.55), inset 0 0 18px rgba(63, 242, 230, 0.2); }
+  .f-tag { position: absolute; padding: 6px 12px; border-radius: 8px; background: rgba(6, 8, 18, 0.92); border: 1px solid #3ff2e6; color: #e7e9f3; font-size: 16px; white-space: nowrap; }
+  .f-tag b { color: #3ff2e6; font-weight: 600; }
+
+  /* 段落场景 */
+  .f-center { position: absolute; left: 0; right: 0; text-align: center; }
+  .f-h1 { font-size: 132px; letter-spacing: 0.24em; }
+  .f-h2 { font-size: 54px; letter-spacing: 0.12em; }
+  .f-h3 { font-size: 34px; letter-spacing: 0.08em; }
+  .f-p { font-size: 24px; color: #c9cde3; letter-spacing: 0.04em; }
+  .f-pill { display: inline-block; padding: 6px 16px; border-radius: 999px; border: 1px solid rgba(150, 162, 220, 0.4); font-size: 17px; color: #c9cde3; margin: 0 6px; background: rgba(14, 17, 34, 0.6); }
+  .f-node { position: absolute; width: 132px; margin-left: -66px; text-align: center; }
+  .f-node .disc { font-size: 15px; color: #a9aeca; letter-spacing: 0.1em; height: 22px; }
+  .f-node .ring { width: 74px; height: 74px; margin: 6px auto; border-radius: 50%; border: 2px solid #3ff2e6; display: grid; place-items: center;
+    font-family: 'GE Mono', monospace; font-size: 20px; background: rgba(5, 8, 18, 0.9); box-shadow: 0 0 24px rgba(63, 242, 230, 0.35); }
+  .f-node .nm { font-size: 22px; margin-top: 4px; }
+  .f-node .fr { font-family: 'GE Mono', monospace; font-size: 15px; color: #f5c66b; margin-top: 2px; }
+  .f-tile { position: absolute; width: 420px; padding: 18px 22px; border-radius: 14px; border: 1px solid rgba(150, 162, 220, 0.3);
+    background: linear-gradient(160deg, rgba(20, 24, 50, 0.92), rgba(6, 7, 14, 0.92)); }
+  .f-tile .k { font-size: 14px; color: #3ff2e6; letter-spacing: 0.14em; }
+  .f-tile .t { font-size: 26px; margin: 4px 0 8px; letter-spacing: 0.06em; }
+  .f-tile .m { font-size: 17px; color: #f5c66b; white-space: nowrap; }
+  .f-tile .s { font-size: 13px; color: #8d93b3; margin-top: 8px; }
+  .f-stat { position: absolute; width: 230px; text-align: center; }
+  .f-stat b { display: block; font-family: 'GE Mono', monospace; font-size: 54px; color: #f5c66b; font-weight: 600; text-shadow: 0 0 24px rgba(245, 198, 107, 0.35); }
+  .f-stat span { font-size: 17px; color: #c9cde3; }
+  .f-layer { position: absolute; left: 260px; width: 1080px; height: 82px; border-radius: 14px; border: 1px solid rgba(150, 162, 220, 0.32);
+    background: linear-gradient(90deg, rgba(20, 24, 50, 0.95), rgba(8, 10, 20, 0.9)); display: flex; align-items: center; gap: 18px; padding: 0 24px; }
+  .f-layer .nm { width: 120px; font-size: 26px; }
+  .f-layer .ds { flex: 1; font-size: 17px; color: #c9cde3; }
+  .f-layer .mods { display: flex; gap: 6px; }
+  .f-layer .mods i { font-style: normal; font-family: 'GE Mono', monospace; font-size: 13px; color: #3ff2e6; border: 1px solid rgba(63, 242, 230, 0.4); padding: 2px 8px; border-radius: 6px; }
+  .f-map { position: absolute; width: 560px; padding: 12px 18px; border-radius: 12px; border: 1px solid rgba(150, 162, 220, 0.3); background: rgba(10, 12, 26, 0.92); font-size: 19px; }
+  .f-map small { display: block; font-size: 13px; color: #8d93b3; margin-top: 2px; }
+  .f-app { position: absolute; width: 330px; height: 300px; padding: 22px; border-radius: 18px; border: 1px solid rgba(150, 162, 220, 0.3);
+    background: linear-gradient(170deg, rgba(24, 28, 58, 0.95), rgba(6, 7, 14, 0.95)); }
+  .f-app svg { width: 64px; height: 64px; }
+  .f-app .t { font-size: 27px; margin: 14px 0 8px; letter-spacing: 0.08em; }
+  .f-app .d { font-size: 16px; line-height: 1.7; color: #c9cde3; }
+  `;
+  document.head.append(style);
+
+  /* ═══════════════ 工具 ═══════════════ */
+  const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const E = {
+    lin: (t) => t,
+    out3: (t) => 1 - Math.pow(1 - t, 3),
+    in3: (t) => t * t * t,
+    io3: (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2),
+    outExpo: (t) => (t >= 1 ? 1 : 1 - Math.pow(2, -10 * t)),
+    outBack: (t) => 1 + 2.4 * Math.pow(t - 1, 3) + 1.4 * Math.pow(t - 1, 2),
+    ioSine: (t) => -(Math.cos(Math.PI * t) - 1) / 2,
+  };
+  const P = (lt, start, dur, ease = E.out3) => ease(clamp((lt - start) / dur));
+
+  function el(tag, attrs = {}, ...kids) {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v == null) continue;
+      if (k === 'class') e.className = v;
+      else if (k === 'style') e.style.cssText = v;
+      else if (k === 'html') e.innerHTML = v;
+      else e.setAttribute(k, v);
+    }
+    for (const c of kids.flat()) if (c != null && c !== false) e.append(c instanceof Node ? c : document.createTextNode(String(c)));
+    return e;
+  }
+  const svgNS = 'http://www.w3.org/2000/svg';
+  function svg(tag, attrs = {}, ...kids) {
+    const e = document.createElementNS(svgNS, tag);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+    for (const c of kids) e.append(c);
+    return e;
+  }
+
+  /** 把文字拆成逐字元素，用于逐字动画。 */
+  function chars(text, cls = '') {
+    const wrap = el('span', { class: cls });
+    const list = [];
+    for (const ch of [...text]) {
+      const s = el('span', { class: 'f-ch' }, ch);
+      wrap.append(s);
+      list.push(s);
+    }
+    return { el: wrap, list };
+  }
+  function animChars(list, lt, o = {}) {
+    const { delay = 0, stagger = 0.035, dur = 0.6, dy = 22, blur = 10, sc = 1, out = null, outDur = 0.45, outDy = -14 } = o;
+    list.forEach((s, i) => {
+      const p = E.out3(clamp((lt - delay - i * stagger) / dur));
+      let op = p;
+      let y = (1 - p) * dy;
+      let b = (1 - p) * blur;
+      let k = lerp(sc, 1, p);
+      if (out != null) {
+        const q = E.in3(clamp((lt - out - i * stagger * 0.4) / outDur));
+        op *= 1 - q;
+        y += q * outDy;
+        b += q * 6;
+      }
+      s.style.opacity = op.toFixed(3);
+      s.style.transform = `translateY(${y.toFixed(2)}px) scale(${k.toFixed(3)})`;
+      s.style.filter = b > 0.05 ? `blur(${b.toFixed(2)}px)` : 'none';
+    });
+  }
+
+  /* ═══════════════ 时间、镜头与等待 ═══════════════ */
+  let T = 0;
+  let done = false;
+  let appRunning = true;
+  const shots = [];
+  const waiters = [];
+  const events = [];
+  const captions = [];
+  let spine = false;
+
+  function shot(update, o = {}) {
+    const s = { t0: T, update, dur: o.dur ?? Infinity, el: o.el, onEnd: o.onEnd, dead: false };
+    if (s.el) (o.parent || stage).append(s.el);
+    shots.push(s);
+    return s;
+  }
+  const wait = (sec) => new Promise((res) => { const t = T + sec; waiters.push({ cond: () => T >= t - 1e-6, res }); });
+  const until = (pred, max = 600) => new Promise((res) => { const t = T + max; waiters.push({ cond: () => pred() || T >= t, res }); });
+  function tween(dur, fn, ease = E.io3) {
+    return new Promise((res) => shot((lt) => fn(ease(clamp(lt / dur))), { dur, onEnd: () => { fn(1); res(); } }));
+  }
+  function sfx(type, extra = {}) {
+    events.push({ t: +T.toFixed(3), type, ...extra });
+  }
+  const flush = async () => { for (let i = 0; i < 6; i++) await Promise.resolve(); };
+
+  /* ═══════════════ 图层 ═══════════════ */
+  const root = el('div', { id: 'film' });
+  const bg = el('div', { class: 'f-bg' });
+  const cv = el('canvas', { class: 'f-cv' });
+  cv.width = Math.round(VW * CFG.scale);
+  cv.height = Math.round(VH * CFG.scale);
+  const cx = cv.getContext('2d');
+  const stage = el('div', { class: 'f-stage' });
+  const slot = el('div', { class: 'f-slot' });
+  const capLine = el('div', { class: 'line' });
+  const cap = el('div', { class: 'f-cap' }, el('div', { class: 'who' }, '观测者 · 零号'), capLine);
+  const cursorEl = el('div', { class: 'f-cursor', html: '<svg viewBox="0 0 30 30" width="30" height="30"><path d="M4 2 L4 24 L10 18 L14 27 L18 25 L14 16 L22 16 Z" fill="#fff" stroke="#05060a" stroke-width="1.6" stroke-linejoin="round"/></svg>' });
+  root.append(bg, cv, stage, slot, cap, cursorEl);
+  document.body.append(root);
+  bg.style.opacity = '1';
+
+  /** 背景遮罩（0 = 作品画面完全可见，1 = 完全遮住）。 */
+  let bgOp = 1;
+  const setBg = (a) => { bgOp = a; bg.style.opacity = a.toFixed(3); };
+  const fadeBg = (to, dur = 0.8) => { const from = bgOp; return tween(dur, (k) => setBg(lerp(from, to, k))); };
+
+  /* ═══════════════ 字幕 ═══════════════ */
+  let capOn = null;
+  function say(text, hold) {
+    if (capOn) capOn.end = T;
+    const c = { text, start: T, end: T + hold, own: true };
+    capOn = c;
+    captions.push(c);
+    capLine.textContent = text;
+  }
+  function updateCap() {
+    const c = capOn;
+    if (!c) { cap.style.opacity = '0'; return; }
+    const a = clamp((T - c.start) / 0.3) * clamp((c.end - T) / 0.35);
+    cap.style.opacity = a.toFixed(3);
+    cap.style.transform = `translateX(-50%) translateY(${((1 - clamp((T - c.start) / 0.35)) * 8).toFixed(1)}px)`;
+    if (T > c.end + 0.4) capOn = null;
+  }
+  async function line(text, hold) {
+    say(text, hold);
+    await wait(hold + 0.25);
+  }
+
+  /* ═══════════════ 光标 ═══════════════ */
+  const cur = { x: VW * 0.55, y: VH * 0.62, vis: 0 };
+  function drawCursor() {
+    cursorEl.style.opacity = cur.vis.toFixed(3);
+    cursorEl.style.transform = `translate(${(cur.x - 4).toFixed(1)}px, ${(cur.y - 2).toFixed(1)}px)`;
+  }
+  async function showCursor(on = true) { const a = cur.vis; await tween(0.3, (k) => (cur.vis = lerp(a, on ? 1 : 0, k))); }
+  async function moveTo(x, y, dur = 0.8) {
+    const x0 = cur.x, y0 = cur.y;
+    const dx = x - x0, dy = y - y0;
+    const bend = Math.min(80, Math.hypot(dx, dy) * 0.18);
+    const mx = (x0 + x) / 2 - (dy / (Math.hypot(dx, dy) || 1)) * bend;
+    const my = (y0 + y) / 2 + (dx / (Math.hypot(dx, dy) || 1)) * bend;
+    await tween(dur, (k) => {
+      const a = (1 - k) * (1 - k), b = 2 * k * (1 - k), c = k * k;
+      cur.x = a * x0 + b * mx + c * x;
+      cur.y = a * y0 + b * my + c * y;
+    }, E.io3);
+  }
+  function ripple(x, y, color = '#f5c66b') {
+    const r = el('div', { class: 'f-ripple', style: `left:${x}px;top:${y}px;border-color:${color}` });
+    shot((lt) => { const k = clamp(lt / 0.55); r.style.transform = `scale(${0.2 + k * 1.1})`; r.style.opacity = (1 - k).toFixed(3); }, { el: r, dur: 0.55 });
+  }
+  async function click(elem, action) {
+    if (elem) {
+      const r = elem.getBoundingClientRect();
+      await moveTo(r.left + r.width / 2, r.top + r.height / 2, 0.7);
+    }
+    ripple(cur.x, cur.y);
+    sfx('click');
+    await wait(0.12);
+    if (action) action();
+    else if (elem) elem.click();
+    await wait(0.25);
+  }
+  /** 拖动滑杆：pos 为滑杆刻度上的值（对数滑杆即 log10）。 */
+  async function drag(input, toPos, dur = 1.6, fire = true) {
+    const r = input.getBoundingClientRect();
+    const min = Number(input.min), max = Number(input.max);
+    const X = (p) => r.left + 9 + ((p - min) / (max - min)) * (r.width - 18);
+    const y = r.top + r.height / 2;
+    const p0 = Number(input.value);
+    await moveTo(X(p0), y, 0.6);
+    ripple(cur.x, cur.y, '#3ff2e6');
+    await tween(dur, (k) => {
+      const p = lerp(p0, toPos, k);
+      cur.x = X(p);
+      input.value = String(p);
+      if (fire) input.dispatchEvent(new Event('input', { bubbles: true }));
+    }, E.io3);
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    await wait(0.2);
+  }
+  async function typeInto(input, text, cps = 9) {
+    const r = input.getBoundingClientRect();
+    await moveTo(r.left + 30, r.top + r.height / 2, 0.6);
+    ripple(cur.x, cur.y, '#3ff2e6');
+    input.focus();
+    for (let i = 1; i <= text.length; i++) {
+      input.value = text.slice(0, i);
+      sfx('type');
+      await wait(1 / cps);
+    }
+  }
+
+  /** 高亮框与指示标签。 */
+  function highlight(elemOrRect, label, hold = 2.6, side = 'right') {
+    const r = elemOrRect.getBoundingClientRect ? elemOrRect.getBoundingClientRect() : elemOrRect;
+    const pad = 6;
+    const box = el('div', { class: 'f-hl', style: `left:${r.left - pad}px;top:${r.top - pad}px;width:${r.width + pad * 2}px;height:${r.height + pad * 2}px` });
+    const tag = label ? el('div', { class: 'f-tag', html: label }) : null;
+    const wrap = el('div', {}, box, tag);
+    if (tag) {
+      if (side === 'right') tag.style.cssText = `left:${r.right + 18}px;top:${r.top + r.height / 2 - 18}px`;
+      else if (side === 'left') tag.style.cssText = `right:${VW - r.left + 18}px;top:${r.top + r.height / 2 - 18}px`;
+      else if (side === 'above') tag.style.cssText = `left:${r.left}px;top:${r.top - 50}px`;
+      else tag.style.cssText = `left:${r.left}px;top:${r.bottom + 14}px`;
+    }
+    sfx('hl');
+    shot((lt) => {
+      const a = P(lt, 0, 0.35) * (1 - P(lt, hold - 0.4, 0.4, E.in3));
+      box.style.opacity = a.toFixed(3);
+      box.style.transform = `scale(${lerp(1.08, 1, P(lt, 0, 0.4, E.outBack)).toFixed(3)})`;
+      if (tag) {
+        tag.style.opacity = (P(lt, 0.15, 0.35) * (1 - P(lt, hold - 0.4, 0.4))).toFixed(3);
+        tag.style.transform = `translateX(${((1 - P(lt, 0.15, 0.45)) * (side === 'left' ? 16 : -16)).toFixed(1)}px)`;
+      }
+    }, { el: wrap, dur: hold });
+  }
+
+  /** 三维坐标 → 画面坐标。 */
+  function project(v) {
+    const p = v.clone().project(app.stage.camera);
+    return { x: ((p.x + 1) / 2) * VW, y: ((1 - p.y) / 2) * VH };
+  }
+
+  /* ═══════════════ 左侧知识卡片 ═══════════════ */
+  let cardNow = null;
+  function card(d) {
+    if (cardNow && !cardNow.exitAt) cardNow.exitAt = T;
+    const accent = d.accent || '#3ff2e6';
+    const title = chars(d.title, 'f-serif');
+    const bar = el('div', { class: 'bar', style: `background:${accent};box-shadow:0 0 14px ${accent}` });
+    const sweep = el('div', { class: 'sweep' });
+    const kids = [bar, sweep, el('div', { class: 'kick', style: `color:${accent}` }, d.kick), el('div', { class: 'ttl' }, title.el)];
+    let big = null;
+    if (d.big) {
+      big = el('div', { class: 'big f-mono' }, '0');
+      kids.push(big);
+    }
+    let fx = null;
+    if (d.fx) {
+      fx = el('div', { class: 'fx f-mono' }, '');
+      kids.push(fx);
+    }
+    let chipEls = [];
+    if (d.chips) {
+      chipEls = d.chips.map((c) => el('span', { class: 'chip' }, c));
+      kids.push(el('div', { class: 'chips' }, chipEls));
+    }
+    const lns = (d.lines || []).map((t) => el('div', { class: 'ln' }, t));
+    kids.push(...lns);
+    const src = d.src ? el('div', { class: 'src' }, d.src) : null;
+    if (src) kids.push(src);
+    const box = el('div', { class: 'f-card', style: d.top ? `top:${d.top}px` : '' }, kids);
+    const hold = d.hold ?? 6;
+    const me = { exitAt: null };
+    cardNow = me;
+    sfx('card');
+    shot((lt, s) => {
+      const enter = E.outExpo(clamp(lt / 0.6));
+      box.style.clipPath = `inset(0 ${((1 - enter) * 100).toFixed(2)}% 0 0 round 14px)`;
+      bar.style.transform = `scaleY(${P(lt, 0, 0.5).toFixed(3)})`;
+      sweep.style.left = `${lerp(-140, 420, P(lt, 0.2, 0.9, E.io3)).toFixed(1)}px`;
+      animChars(title.list, lt, { delay: 0.18, stagger: 0.028, dur: 0.5, dy: 14, blur: 8 });
+      if (big) {
+        const k = P(lt, 0.3, 1.2, E.out3);
+        big.textContent = `${Math.round(d.big * k)}${d.bigUnit || ''}`;
+      }
+      if (fx) {
+        const n = Math.floor(clamp((lt - 0.45) / Math.max(0.6, d.fx.length * 0.028)) * d.fx.length);
+        fx.textContent = d.fx.slice(0, n) + (n < d.fx.length && Math.floor(lt * 6) % 2 ? '▍' : '');
+      }
+      chipEls.forEach((c, i) => {
+        const p = P(lt, 0.4 + i * 0.16, 0.45, E.outBack);
+        c.style.opacity = clamp(p).toFixed(3);
+        c.style.transform = `scale(${lerp(0.6, 1, p).toFixed(3)})`;
+      });
+      lns.forEach((l, i) => {
+        const p = P(lt, 0.45 + (chipEls.length ? chipEls.length * 0.16 : 0) + i * 0.16, 0.5);
+        l.style.opacity = p.toFixed(3);
+        l.style.transform = `translateY(${((1 - p) * 10).toFixed(1)}px)`;
+      });
+      if (src) src.style.opacity = P(lt, 0.9 + lns.length * 0.12, 0.5).toFixed(3);
+      if (!me.exitAt && lt >= hold) me.exitAt = T;
+      if (me.exitAt) {
+        const q = E.in3(clamp((T - me.exitAt) / 0.4));
+        box.style.opacity = (1 - q).toFixed(3);
+        box.style.transform = `translateX(${(-50 * q).toFixed(1)}px)`;
+        if (q >= 1) s.dead = true;
+      }
+    }, { el: box, parent: slot });
+  }
+
+  /* ═══════════════ 章节卡 ═══════════════ */
+  const CHAPTERS = {
+    hall: ['序章', '参数空间', '实验大厅 · 浑天仪五重环', '知识即权限：理解了哪一层，才能改变哪一层'],
+    origin: ['第①幕', '精细调节', 'L0 物理常数 · 核天体物理 / 宇宙学', '宇宙为什么允许生命存在'],
+    stars: ['第②幕', '宜居带', 'L1 天体 · 天体物理 / 行星科学', '恒星、轨道与宜居带'],
+    elements: ['第③幕', '碳–硅酸盐循环', 'L2 行星化学 · 地球化学 / 气候科学', '一台看不见的行星恒温器'],
+    life: ['第④幕', '演化与大灭绝', 'L3 生命 · 古生物学 / 演化生物学', '撞击点决定谁能登场'],
+    civ: ['第⑤幕', '文明动力学', 'L4 文明 · 历史唯物主义 / 复杂系统', '生产力与生产关系的矛盾运动'],
+    finale: ['终章', '费米悖论', 'L5 未来 · 概率论 / 跨学科', '一万个宇宙，与此刻的地球'],
+  };
+  let chapterAt = -99;
+  function chapter(id) {
+    const c = CHAPTERS[id];
+    if (!c) return;
+    chapterAt = T;
+    if (cardNow && !cardNow.exitAt) cardNow.exitAt = T;
+    const tt = chars(c[1], 'f-serif');
+    const rule = el('div', { class: 'rule' });
+    const no = el('div', { class: 'no' }, c[0]);
+    const ly = el('div', { class: 'ly' }, c[2]);
+    const es = el('div', { class: 'es' }, c[3]);
+    const box = el('div', { class: 'f-chap' }, no, el('div', { class: 'tt' }, tt.el), rule, ly, es);
+    const hold = 4.6;
+    const me = { exitAt: null };
+    cardNow = me;
+    sfx('chapter');
+    shot((lt, s) => {
+      no.style.opacity = P(lt, 0, 0.4).toFixed(3);
+      no.style.letterSpacing = `${lerp(0.9, 0.3, P(lt, 0, 0.8)).toFixed(3)}em`;
+      animChars(tt.list, lt, { delay: 0.1, stagger: 0.09, dur: 0.7, dy: 0, blur: 16, sc: 1.6 });
+      rule.style.transform = `scaleX(${P(lt, 0.45, 0.8, E.outExpo).toFixed(3)})`;
+      ly.style.opacity = P(lt, 0.7, 0.5).toFixed(3);
+      es.style.opacity = P(lt, 0.9, 0.5).toFixed(3);
+      es.style.transform = `translateY(${((1 - P(lt, 0.9, 0.5)) * 10).toFixed(1)}px)`;
+      if (!me.exitAt && lt >= hold) me.exitAt = T;
+      if (me.exitAt) {
+        const q = E.in3(clamp((T - me.exitAt) / 0.45));
+        box.style.opacity = (1 - q).toFixed(3);
+        box.style.filter = q > 0.01 ? `blur(${(q * 8).toFixed(1)}px)` : 'none';
+        if (q >= 1) s.dead = true;
+      }
+    }, { el: box, parent: slot });
+  }
+
+  /* ═══════════════ 画布粒子 ═══════════════ */
+  const painters = [];
+  function painter(fn) {
+    const p = { fn, dead: false, t0: T };
+    painters.push(p);
+    return p;
+  }
+  function rand(seed) {
+    let s = seed >>> 0;
+    return () => {
+      s = (s + 0x6d2b79f5) | 0;
+      let t = Math.imul(s ^ (s >>> 15), 1 | s);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  /** 星空与星云：段落场景的背景。 */
+  function starfield(seed = 7) {
+    const r = rand(seed);
+    const stars = Array.from({ length: 520 }, () => ({ x: r() * VW, y: r() * VH, z: 0.2 + r() * 0.8, tw: r() * 6.28 }));
+    const st = { op: 0, vx: -6, warp: 0 };
+    st.p = painter((t) => {
+      if (st.op <= 0.001) return;
+      cx.save();
+      cx.globalAlpha = st.op;
+      cx.globalCompositeOperation = 'lighter';
+      for (const s of stars) {
+        const x = ((s.x + st.vx * t * s.z) % VW + VW) % VW;
+        const tw = 0.55 + 0.45 * Math.sin(t * 1.7 + s.tw);
+        const len = st.warp * 60 * s.z;
+        cx.strokeStyle = cx.fillStyle = `rgba(${200 + 55 * s.z},${210 + 45 * s.z},255,${(0.25 + 0.6 * s.z) * tw})`;
+        if (len > 0.5) {
+          const dx = x - VW / 2, dy = s.y - VH / 2, d = Math.hypot(dx, dy) || 1;
+          cx.lineWidth = 1.2 * s.z;
+          cx.beginPath();
+          cx.moveTo(x, s.y);
+          cx.lineTo(x + (dx / d) * len, s.y + (dy / d) * len);
+          cx.stroke();
+        } else cx.fillRect(x, s.y, 1.6 * s.z, 1.6 * s.z);
+      }
+      cx.restore();
+    });
+    return st;
+  }
+
+  /** 粒子聚合成文字。 */
+  function particleText(text, font, cxPos, cyPos, opts = {}) {
+    const off = document.createElement('canvas');
+    off.width = VW;
+    off.height = 360;
+    const o = off.getContext('2d');
+    o.fillStyle = '#fff';
+    o.font = font;
+    o.textAlign = 'center';
+    o.textBaseline = 'middle';
+    o.fillText(text, VW / 2, 180);
+    const img = o.getImageData(0, 0, VW, 360).data;
+    const pts = [];
+    const step = opts.step || 4;
+    for (let y = 0; y < 360; y += step) for (let x = 0; x < VW; x += step) if (img[(y * VW + x) * 4 + 3] > 140) pts.push([x - VW / 2 + cxPos, y - 180 + cyPos]);
+    const r = rand(11);
+    const ps = pts.map(([x, y]) => {
+      const a = r() * Math.PI * 2, d = 300 + r() * 700;
+      return { x, y, sx: cxPos + Math.cos(a) * d, sy: cyPos + Math.sin(a) * d * 0.6, delay: r() * 0.9, c: r() };
+    });
+    const st = { form: 0, op: 1, scatter: 0 };
+    st.p = painter((t) => {
+      if (st.op <= 0.001) return;
+      cx.save();
+      cx.globalCompositeOperation = 'lighter';
+      for (const p of ps) {
+        const k = E.io3(clamp((st.form * 1.9 - p.delay) / 1));
+        let x = lerp(p.sx, p.x, k), y = lerp(p.sy, p.y, k);
+        if (st.scatter > 0) {
+          x += (p.sx - p.x) * st.scatter * 0.5;
+          y += (p.sy - p.y) * st.scatter * 0.5 - st.scatter * 60;
+        }
+        const a = st.op * (0.35 + 0.65 * k) * (1 - st.scatter);
+        cx.fillStyle = p.c > 0.7 ? `rgba(63,242,230,${a})` : `rgba(255,214,140,${a})`;
+        cx.fillRect(x, y, 2.2, 2.2);
+      }
+      cx.restore();
+    });
+    return st;
+  }
+
+  /* ═══════════════ 旁白触发的知识卡片（主线） ═══════════════ */
+  const ON_LINE = [
+    [/五重环/, { kick: '核心机制', title: '知识即权限', accent: '#f5c66b', lines: ['五重环由外向内：文明 · 生命 · 元素 · 星辰 · 本源', '理解了哪一层规律，才能改变哪一层参量'], src: '哲学根据：恩格斯《反杜林论》关于自由与必然的论述', hold: 6.5 }],
+    [/认知校准完成/, { kick: '认知校准', title: '五个学段，五种讲解深度', lines: ['见习观测员（约小学）→ 首席科学家（约硕士）', '没有钥匙不会被卡住：先看后果，再顿悟解锁'], hold: 4.6 }],
+    [/宇宙编号 \d+，实验开始/, { kick: '可复现', title: '宇宙编号即随机种子', lines: ['同一编号 → 同一部编年史、同一个结局', '评委输入编号，就能复现任何一次推演'], hold: 3.6 }],
+    [/百分之零点五/, { kick: 'L0 · 核天体物理', title: '霍伊尔态与碳的诞生', fx: '¹²C 霍伊尔态 ≈ 7.65 MeV', lines: ['强相互作用偏移 > 0.5%，或电磁力偏移 > 4%', '恒星中的碳或氧几乎全部消失'], src: 'Oberhummer, Csótó & Schlattl 2000, Science 289:88', hold: 6 }],
+    [/本源之钥仍在封印/, { kick: '叙事结构', title: '两个问题，分开回答', lines: ['物理常数处处相同，不能解释银河为何寂静', '本源之钥在走完五幕之后才解封'], hold: 5 }],
+    [/2\.4 天文单位/, { kick: 'L1 · 天体物理', title: '辐射平衡温度', fx: 'T_eq = [L★(1−A) / 16πσa²]^¼', lines: ['a = 2.4 AU  →  T_eq ≈ 164 K', '低于冰点：行星冰封，链条在 L1 断裂'], src: 'IAU 2015 B3 太阳名义值；NASA 地球数据表', accent: '#ff6152', hold: 5.5 }],
+    [/液态水出现了/, { kick: 'L1 · 宜居带', title: '回到一个天文单位', fx: 'T_eq ≈ 255 K  + 33 K 温室增温', lines: ['保守宜居带 0.99 – 1.68 AU', '公式、宜居带与寿命判定都有单元测试'], src: 'Kopparapu et al. 2013, ApJ 765:131', hold: 5 }],
+    [/恒温器/, { kick: 'L2 · 地球化学', title: '碳–硅酸盐循环', fx: 'W = W₀·(pCO₂)^0.3·e^((T−288)/13.7)', lines: ['火山补充 CO₂ → 升温 → 风化加快 → CO₂ 埋入海底', '负反馈把升温削减一半以上'], src: 'Walker, Hays & Kasting 1981, JGR 86:9776', hold: 6.5 }],
+    [/我们不要过分陶醉/, { kick: '经典点题 · 人与自然', title: '自然界的报复', lines: ['恒温器失效，是自然对过度索取的回应'], src: '恩格斯《劳动在从猿到人转变过程中的作用》（1876）', accent: '#a497ff', hold: 5.5 }],
+    [/百分之十三/, { kick: 'L3 · 古生物学', title: 'K-Pg 撞击：约 13% 的地表', lines: ['只有落在富含碳氢化合物与硫的岩层，才引发大灭绝', '恐龙灭绝，为哺乳动物与人类让出生态位'], src: 'Kaiho & Oshima 2017, Sci. Rep. 7:14855', accent: '#f5c66b', hold: 6 }],
+    [/劳动让手变得灵巧/, { kick: '经典论述 + 现代证据', title: '劳动与人类起源', lines: ['恩格斯：劳动在从猿到人转变中的作用', '现代证据：石器技术与脑容量协同演化（分开标注）'], src: 'Harmand et al. 2015, Nature 521:310', hold: 4.6 }],
+    [/沙盘上的每一处灯火/, { kick: 'L4 · 基于主体的模型', title: '微观文明沙盘', chips: ['聚落', '耕作', '拓殖', '商路', '瘟疫', '战争', '变革'], lines: ['数百座聚落各自演化，社会形态从相互作用中涌现'], hold: 6.5 }],
+    [/马克思指出/, { kick: 'L4 · 历史唯物主义', title: '生产力与生产关系', fx: 'C = (P − R) / R', lines: ['P 生产力 · R 生产关系容量 · C 矛盾', 'C > 0.6 → 社会形态更替：量变到质变'], src: '马克思《〈政治经济学批判〉序言》（1859）', accent: '#f5c66b', hold: 6.5 }],
+    [/1962 年/, { kick: '历史原型', title: '1962 · B-59 潜艇', lines: ['发射核鱼雷需要三名军官一致同意', '阿尔希波夫投下了反对票'], src: '美国国家安全档案馆解密文件（2002）', accent: '#ff6152', hold: 4.6 }],
+    [/1983 年/, { kick: '历史原型', title: '1983 · 预警误报', lines: ['预警卫星报告五枚导弹来袭', '彼得罗夫判断为系统故障，没有上报'], accent: '#ff6152', hold: 4.6 }],
+    [/个人的克制/, { kick: '必然与偶然', title: '偶然决定这一次，结构决定概率', lines: ['对立的格局不变，危机终会再来', '必然性通过偶然性为自己开辟道路'], accent: '#a497ff', hold: 5 }],
+    [/回到工业时代之前/, { kick: '时间轴回溯', title: '改写历史', lines: ['从同一时刻确定性重放，此后由新的参量书写', '合作 0.05 → 0.75 · 生态约束 0.50 → 0.65'], hold: 5.5 }],
+    [/人工智能登场/, { kick: '新质生产力', title: 'AI 让生产力再次跃升', lines: ['生产关系必须跟上', '对应终章的“AI 治理”参量'], hold: 4.6 }],
+    [/一万次/, { kick: '终章 · 概率论', title: '德雷克方程 × 10 000', fx: 'N = R★·f_p·n_e·f_l·f_i·f_c·L', lines: ['各因子按文献给出的不确定性抽样', 'f_l = 1 − e^(−λVt)，log₁₀λVt ~ N(0, 50)'], src: 'Sandberg, Drexler & Ord 2018, arXiv:1806.02404', hold: 7 }],
+    [/约 52%/, { kick: '本模型结果', title: '寂静的银河', big: 52, bigUnit: '%', lines: ['的银河系里，此刻找不到第二个技术文明'], src: '取值区间为本作品设定，不代表论文结论', accent: '#f5c66b', hold: 5.5 }],
+    [/此刻的地球/, { kick: '真实影像', title: '唯一确定的样本', lines: ['镜头穿过一万个宇宙，落在此刻地球的夜面灯火上'], src: 'NASA 公有领域地球影像', hold: 4.6 }],
+    [/历史是这样创造的/, { kick: '经典点题', title: '历史合力', lines: ['每位观众的选择是一支力向量', '无数个力的平行四边形，合成文明的走向'], src: '恩格斯 1890 年致约·布洛赫的信', accent: '#a497ff', hold: 6 }],
+    [/问题在于改变世界/, { kick: '经典点题', title: '从解释世界到改变世界', lines: ['实验室从“解释宇宙”转向“改变未来”'], src: '马克思《关于费尔巴哈的提纲》第十一条', accent: '#f5c66b', hold: 5 }],
+    [/未来之钥，交给你/, { kick: '人民群众是历史的创造者', title: '未来之钥，人人持有', lines: ['最后一把钥匙不看认知等级'], accent: '#f5c66b', hold: 4.4 }],
+  ];
+  let appCap = null;
+  function onAppLine(text) {
+    if (!spine) return;
+    if (appCap) appCap.end = T;
+    appCap = { text, start: T, end: T + 6, own: false };
+    captions.push(appCap);
+    for (const [re, d] of ON_LINE) {
+      if (re.test(text)) {
+        const gap = 3.4 - (T - chapterAt);
+        if (gap > 0) void wait(gap).then(() => card({ ...d, hold: Math.max(3, (d.hold ?? 6) - gap) }));
+        else card(d);
+        break;
+      }
+    }
+  }
+
+  /* ═══════════════ 挂钩作品事件 ═══════════════ */
+  const hook = (obj, name, fn) => {
+    const orig = obj[name].bind(obj);
+    obj[name] = (...a) => {
+      try { fn(...a); } catch (e) { console.error(e); }
+      return orig(...a);
+    };
+  };
+  hook(app.subtitle, 'show', (text) => onAppLine(text));
+  hook(app.subtitle, 'hide', () => { if (appCap) appCap.end = Math.min(appCap.end, T); });
+  hook(app.hud, 'setAct', (id) => { if (spine) chapter(id); });
+  for (const m of ['unlock', 'leap', 'extinct', 'impact', 'chime']) hook(app.audio, m, () => sfx(m));
+  hook(app.audio, 'setMood', (m) => sfx('mood', { mood: m }));
+  hook(app.modals, 'open', () => sfx('modal'));
+
+  /* ═══════════════ 段落场景 ═══════════════ */
+  const stars = starfield(3);
+
+  /** 场景容器：淡入、保持、淡出后移除。 */
+  function scene(build, dur) {
+    const box = el('div', { class: 'f-abs', style: 'inset:0' });
+    const upd = build(box);
+    return new Promise((res) => shot((lt, s) => {
+      upd(lt);
+      if (lt >= dur) s.dead = true;
+    }, { el: box, dur, onEnd: () => { box.remove(); res(); } }));
+  }
+
+  // A. 冷开场
+  async function coldOpen() {
+    setBg(1);
+    stars.op = 0;
+    sfx('mood', { mood: 'open' });
+    void tween(2.5, (k) => (stars.op = k));
+    const l1 = chars('在已知的宇宙里', 'f-serif');
+    const l2 = chars('我们只确认过一次文明', 'f-serif f-gold');
+    await scene((box) => {
+      const a = el('div', { class: 'f-center f-h3', style: 'top:360px;font-size:44px;letter-spacing:0.2em' }, l1.el);
+      const b = el('div', { class: 'f-center f-h2', style: 'top:440px;letter-spacing:0.18em' }, l2.el);
+      box.append(a, b);
+      say('在已知的宇宙里，我们只确认过一次文明。', 5.2);
+      return (lt) => {
+        animChars(l1.list, lt, { delay: 0.6, stagger: 0.09, dur: 0.9, dy: 0, blur: 12, out: 5.4 });
+        animChars(l2.list, lt, { delay: 2.0, stagger: 0.08, dur: 0.9, dy: 10, blur: 14, sc: 1.2, out: 5.6 });
+      };
+    }, 6.4);
+  }
+
+  // B. 片名
+  async function titleCard() {
+    sfx('hit');
+    const pt = particleText(CFG.title, `900 230px FilmSerif`, VW / 2, 360, { step: 4 });
+    const t1 = chars(CFG.title, 'f-serif');
+    const sub = chars(CFG.subtitle, 'f-serif f-gold');
+    await scene((box) => {
+      const h = el('div', { class: 'f-center f-h1', style: 'top:270px;font-size:230px;line-height:1.1;letter-spacing:0.12em;text-shadow:0 0 50px rgba(245,198,107,0.45)' }, t1.el);
+      const s = el('div', { class: 'f-center', style: 'top:540px;font-size:40px;letter-spacing:0.42em' }, sub.el);
+      const contest = el('div', { class: 'f-center', style: 'top:640px' }, el('span', { class: 'f-pill' }, CFG.contest));
+      const tags = el('div', { class: 'f-center', style: 'top:700px' }, ...['Web 3D 实时交互', '跨学科确定性推演', '大模型 × 校验闸门', '单文件离线运行'].map((x) => el('span', { class: 'f-pill', style: 'color:#3ff2e6;border-color:rgba(63,242,230,0.45)' }, x)));
+      box.append(h, s, contest, tags);
+      return (lt) => {
+        pt.form = clamp(lt / 2.4);
+        pt.op = 1 - P(lt, 2.4, 0.8);
+        t1.list.forEach((c, i) => {
+          const p = P(lt, 2.0 + i * 0.08, 0.8);
+          c.style.opacity = p.toFixed(3);
+          c.style.filter = p < 1 ? `blur(${((1 - p) * 10).toFixed(1)}px)` : 'none';
+        });
+        animChars(sub.list, lt, { delay: 2.8, stagger: 0.05, dur: 0.6, dy: 12, blur: 6 });
+        contest.style.opacity = P(lt, 3.6, 0.6).toFixed(3);
+        [...tags.children].forEach((c, i) => {
+          const p = P(lt, 4.0 + i * 0.15, 0.5, E.outBack);
+          c.style.opacity = clamp(p).toFixed(3);
+          c.style.transform = `translateY(${((1 - p) * 16).toFixed(1)}px)`;
+        });
+        const out = P(lt, 7.6, 0.6, E.in3);
+        box.style.opacity = (1 - out).toFixed(3);
+        box.style.transform = `scale(${(1 + out * 0.06).toFixed(3)})`;
+      };
+    }, 8.3);
+    pt.p.dead = true;
+  }
+
+  // C. 问题与六层链条
+  const LAYERS = [
+    ['L0', '物理常数', '物理', '1/32'],
+    ['L1', '天体', '天文', '1/1.1×10³'],
+    ['L2', '行星化学', '化学', '1/1.2×10⁴'],
+    ['L3', '生命', '生物', '1/9.2×10⁴'],
+    ['L4', '文明', '社会科学', '1/1.8×10⁵'],
+    ['L5', '未来', '由你决定', '?'],
+  ];
+  async function question() {
+    sfx('whoosh');
+    const q = chars('我们为什么至今没有发现外星人？', 'f-serif');
+    await scene((box) => {
+      const head = el('div', { class: 'f-center f-h2', style: 'top:96px' }, q.el);
+      const left = el('div', { class: 'f-abs', style: 'left:250px;top:206px;width:520px;text-align:center' },
+        el('div', { class: 'f-serif', style: 'font-size:34px' }, '宇宙为什么允许生命存在？'),
+        el('div', { class: 'f-cyan', style: 'font-size:20px;margin-top:8px' }, 'L0 物理常数回答'));
+      const right = el('div', { class: 'f-abs', style: 'left:830px;top:206px;width:520px;text-align:center' },
+        el('div', { class: 'f-serif', style: 'font-size:34px' }, '银河系为什么一片寂静？'),
+        el('div', { class: 'f-cyan', style: 'font-size:20px;margin-top:8px' }, 'L1–L4 行星、生命、文明回答'));
+      const lineSvg = svg('svg', { width: VW, height: VH, style: 'position:absolute;left:0;top:0' });
+      const xs = LAYERS.map((_, i) => 230 + i * 228);
+      const Y = 470;
+      const path = svg('path', { d: `M${xs[0]} ${Y} L${xs[5]} ${Y}`, stroke: '#3ff2e6', 'stroke-width': 2, fill: 'none', 'stroke-dasharray': '1200', 'stroke-dashoffset': '1200', opacity: '0.6' });
+      lineSvg.append(path);
+      const nodes = LAYERS.map((L, i) => {
+        const n = el('div', { class: 'f-node', style: `left:${xs[i]}px;top:${Y - 58}px` },
+          el('div', { class: 'disc' }, L[2]), el('div', { class: 'ring' }, L[0]), el('div', { class: 'nm f-serif' }, L[1]), el('div', { class: 'fr' }, L[3]));
+        return n;
+      });
+      const note = el('div', { class: 'f-center f-p', style: 'top:640px;font-size:20px' }, '右侧比例：在本作品设定的参数范围内随机抽样，能走过该层的比例');
+      const bfly = el('div', { class: 'f-center f-serif f-red', style: 'top:680px;font-size:34px;letter-spacing:0.1em' }, '任何一个参量偏离，下游的一切随之改写');
+      box.append(head, left, right, lineSvg, ...nodes, note, bfly);
+      say('作品把这个问题拆成两个：宇宙为什么允许生命存在，银河系又为什么一片寂静。', 6.4);
+      // 概率筛选：粒子流逐层变稀
+      const r = rand(5);
+      const parts = Array.from({ length: 420 }, () => ({ x: xs[0] - 160 - r() * 900, y: Y + (r() - 0.5) * 70, v: 120 + r() * 80, die: (() => { let k = 0; while (k < 5 && r() < 0.62) k++; return k; })(), dead: -1, c: r() }));
+      const pp = painter((t) => {
+        const lt = t - pp.t0;
+        if (lt < 6.4) return;
+        cx.save();
+        cx.globalCompositeOperation = 'lighter';
+        for (const p of parts) {
+          if (p.dead >= 0) {
+            const k = clamp((lt - p.dead) / 0.9);
+            if (k >= 1) continue;
+            p.y += 1.8;
+            cx.fillStyle = `rgba(255,97,82,${(1 - k) * 0.85})`;
+            cx.fillRect(p.x, p.y, 3, 3);
+            continue;
+          }
+          p.x += p.v / FPS;
+          const gate = xs[Math.min(5, p.die)] + 30;
+          if (p.die < 5 && p.x > gate) p.dead = lt;
+          if (p.x > VW + 20) p.x = xs[0] - 200;
+          if (p.x > xs[0] - 140) {
+            cx.fillStyle = p.c > 0.75 ? 'rgba(63,242,230,0.9)' : 'rgba(255,214,140,0.85)';
+            cx.fillRect(p.x, p.y, 2.6, 2.6);
+          }
+        }
+        cx.restore();
+      });
+      let said2 = false;
+      return (lt) => {
+        animChars(q.list, lt, { delay: 0.1, stagger: 0.05, dur: 0.6, dy: 16, blur: 10 });
+        const sp = P(lt, 1.6, 0.8);
+        left.style.opacity = right.style.opacity = sp.toFixed(3);
+        left.style.transform = `translateX(${((1 - sp) * -60).toFixed(1)}px)`;
+        right.style.transform = `translateX(${((1 - sp) * 60).toFixed(1)}px)`;
+        path.setAttribute('stroke-dashoffset', String(1200 * (1 - P(lt, 6.2, 1.4, E.io3))));
+        nodes.forEach((n, i) => {
+          const p = P(lt, 6.3 + i * 0.22, 0.6, E.outBack);
+          n.style.opacity = clamp(p).toFixed(3);
+          n.style.transform = `translateY(${((1 - p) * 30).toFixed(1)}px) scale(${lerp(0.7, 1, p).toFixed(3)})`;
+          const ring = n.querySelector('.ring');
+          if (lt > 12.6 && i >= 2) {
+            const k = P(lt, 12.6 + (i - 2) * 0.18, 0.4);
+            ring.style.borderColor = i === 2 ? '#ff6152' : `rgba(115,121,151,${1 - 0.6 * k})`;
+            ring.style.boxShadow = i === 2 ? `0 0 ${20 + 14 * Math.sin(lt * 8)}px rgba(255,97,82,0.8)` : 'none';
+            n.style.opacity = i === 2 ? '1' : String(lerp(1, 0.35, k));
+          }
+        });
+        note.style.opacity = (P(lt, 8.2, 0.6) * (1 - P(lt, 12.2, 0.4))).toFixed(3);
+        bfly.style.opacity = P(lt, 12.8, 0.5).toFixed(3);
+        if (lt > 6.6 && !said2) {
+          said2 = true;
+          say('从物理常数到行星、生命、文明与未来，六层宇宙逐层筛选；任何一个参量偏离，链条都可能断裂。', 7.6);
+        }
+        const out = P(lt, 15.6, 0.6, E.in3);
+        box.style.opacity = (1 - out).toFixed(3);
+        if (out >= 1) pp.dead = true;
+      };
+    }, 16.3);
+  }
+
+  // D. 知识即权限
+  async function concept() {
+    sfx('whoosh');
+    const t = chars('知识即权限', 'f-serif f-gold');
+    await scene((box) => {
+      const s = svg('svg', { width: 800, height: 620, viewBox: '-420 -310 800 620', style: 'position:absolute;left:50px;top:150px' });
+      const g0 = svg('g', { transform: 'rotate(-14)' });
+      s.append(g0);
+      const names = ['文明', '生命', '元素', '星辰', '本源'];
+      const rings = names.map((n, i) => {
+        const rx = 330 - i * 58, ry = rx * 0.42;
+        const len = Math.PI * (3 * (rx + ry) - Math.sqrt((3 * rx + ry) * (rx + 3 * ry)));
+        const e = svg('ellipse', { cx: 0, cy: 0, rx, ry, fill: 'none', stroke: i === 4 ? '#3ff2e6' : '#f5c66b', 'stroke-width': 2.4, 'stroke-dasharray': len, 'stroke-dashoffset': len, opacity: 0.9 });
+        const lbl = svg('text', { x: -rx - 8, y: 8, fill: '#e7e9f3', 'font-size': 21, 'font-family': 'FilmSerif', 'text-anchor': 'end' });
+        lbl.textContent = n;
+        g0.append(e, lbl);
+        return { e, lbl, len };
+      });
+      const core = svg('circle', { cx: 0, cy: 0, r: 34, fill: 'url(#cg)', opacity: 0 });
+      const defs = svg('defs', {}, svg('radialGradient', { id: 'cg' }, svg('stop', { offset: '0%', 'stop-color': '#9ff' }), svg('stop', { offset: '100%', 'stop-color': '#135', 'stop-opacity': 0 })));
+      s.append(defs);
+      g0.append(core);
+      const right = el('div', { class: 'f-abs', style: 'left:860px;top:210px;width:640px' },
+        el('div', { class: 'f-h1', style: 'font-size:96px;letter-spacing:0.16em' }, t.el),
+        el('div', { class: 'f-p', style: 'margin-top:18px;font-size:27px;line-height:1.7' }, '你理解了哪一层规律，才能改变哪一层参量。'),
+        el('div', { class: 'f-p', style: 'margin-top:8px;font-size:21px;line-height:1.7;color:#a9aeca' }, '没有钥匙不会被卡住：引擎先让你看到后果，再按认知深度讲解，讲完这一环就会亮起来。'),
+      );
+      const stagesRow = el('div', { class: 'f-abs', style: 'left:860px;top:560px;width:680px;display:flex;flex-wrap:wrap;gap:8px' },
+        ...['见习观测员 · 约小学', '助理观测员 · 约初中', '观测员 · 约高中', '研究员 · 约本科', '首席科学家 · 约硕士'].map((x) => el('span', { class: 'f-pill', style: 'margin:0' }, x)));
+      const quote = el('div', { class: 'f-abs f-serif', style: 'left:860px;top:690px;width:660px;font-size:22px;line-height:1.7;color:#e7e9f3;border-left:3px solid #a497ff;padding-left:16px' },
+        '“自由不在于幻想中摆脱自然规律而独立，而在于认识这些规律……”',
+        el('div', { style: 'font-family:inherit;font-size:15px;color:#a497ff;margin-top:6px;font-weight:400' }, '恩格斯《反杜林论》—— 认识必然，才能获得改变世界的自由'));
+      box.append(s, right, stagesRow, quote);
+      say('核心机制叫“知识即权限”：你理解了哪一层规律，才能改变哪一层参量。', 6.2);
+      let said = false;
+      return (lt) => {
+        rings.forEach((r, i) => {
+          r.e.setAttribute('stroke-dashoffset', String(r.len * (1 - P(lt, 0.2 + i * 0.25, 1.1, E.io3))));
+          r.lbl.setAttribute('opacity', P(lt, 0.8 + i * 0.25, 0.4).toFixed(3));
+          const lit = P(lt, 3.0 + (4 - i) * 0.35, 0.3);
+          r.e.setAttribute('stroke-width', String(2.4 + lit * 2));
+          r.e.style.filter = lit > 0 ? `drop-shadow(0 0 ${(lit * 10).toFixed(1)}px ${i === 4 ? '#3ff2e6' : '#f5c66b'})` : 'none';
+          if (lit > 0 && lit < 0.2 && !r.sfx) { r.sfx = true; sfx('unlock'); }
+        });
+        core.setAttribute('opacity', (0.6 + 0.4 * Math.sin(lt * 3)).toFixed(3));
+        g0.setAttribute('transform', `rotate(${-14 + Math.sin(lt * 0.4) * 3})`);
+        animChars(t.list, lt, { delay: 0.6, stagger: 0.12, dur: 0.8, dy: 0, blur: 14, sc: 1.5 });
+        [...right.children].slice(1).forEach((c, i) => {
+          const p = P(lt, 1.6 + i * 0.5, 0.6);
+          c.style.opacity = p.toFixed(3);
+          c.style.transform = `translateY(${((1 - p) * 14).toFixed(1)}px)`;
+        });
+        [...stagesRow.children].forEach((c, i) => {
+          const p = P(lt, 3.2 + i * 0.22, 0.5, E.outBack);
+          c.style.opacity = clamp(p).toFixed(3);
+          c.style.transform = `scale(${lerp(0.7, 1, p).toFixed(3)})`;
+          c.style.borderColor = lt > 3.2 + i * 0.22 + 0.4 ? 'rgba(245,198,107,0.7)' : '';
+        });
+        quote.style.opacity = P(lt, 6.4, 0.7).toFixed(3);
+        if (lt > 6.4 && !said) {
+          said = true;
+          say('恩格斯说，自由在于认识规律——认识必然，才能获得改变世界的自由。', 5.4);
+        }
+        box.style.opacity = (1 - P(lt, 12.2, 0.5, E.in3)).toFixed(3);
+      };
+    }, 12.8);
+  }
+
+  // E. 结构与尺度
+  async function structure() {
+    sfx('whoosh');
+    const items = [['序章', '参数空间', '实验大厅', '10² m'], ['①', '精细调节', 'L0', '10²⁵ m'], ['②', '宜居带', 'L1', '10¹³ m'], ['③', '碳–硅酸盐循环', 'L2', '10⁷ m'], ['④', '演化与大灭绝', 'L3', '10⁷ m'], ['⑤', '文明动力学', 'L4', '10⁶ m'], ['终章', '费米悖论', 'L5', '一万个宇宙']];
+    await scene((box) => {
+      const head = el('div', { class: 'f-center f-h3 f-serif', style: 'top:250px;font-size:44px' }, '序章 · 五幕 · 终章');
+      const sub = el('div', { class: 'f-center f-p', style: 'top:316px' }, '镜头从宇宙网一路缩放到一座城市，每一幕都由真实的推演引擎驱动');
+      const xs = items.map((_, i) => 190 + i * 204);
+      const cards = items.map((it, i) => el('div', { class: 'f-abs', style: `left:${xs[i] - 90}px;top:420px;width:180px;text-align:center` },
+        el('div', { class: 'f-mono f-cyan', style: 'font-size:14px' }, it[3]),
+        el('div', { style: 'width:62px;height:62px;margin:10px auto;border-radius:50%;border:2px solid #f5c66b;display:grid;place-items:center;font-size:20px;background:rgba(10,12,26,0.9)' }, it[0]),
+        el('div', { class: 'f-serif', style: 'font-size:30px;letter-spacing:0.08em' }, it[1]),
+        el('div', { class: 'f-dim', style: 'font-size:16px;margin-top:4px' }, it[2])));
+      const rail = el('div', { class: 'f-abs', style: 'left:190px;top:480px;height:2px;width:1224px;background:linear-gradient(90deg,#f5c66b,#3ff2e6);transform-origin:left' });
+      box.append(head, sub, rail, ...cards);
+      say('体验由序章、五幕与终章组成，镜头从宇宙网一路缩放到一座城市。', 5.4);
+      return (lt) => {
+        head.style.opacity = P(lt, 0, 0.5).toFixed(3);
+        sub.style.opacity = P(lt, 0.4, 0.5).toFixed(3);
+        rail.style.transform = `scaleX(${P(lt, 0.3, 1.6, E.io3).toFixed(3)})`;
+        cards.forEach((c, i) => {
+          const p = P(lt, 0.5 + i * 0.2, 0.6, E.outBack);
+          c.style.opacity = clamp(p).toFixed(3);
+          c.style.transform = `translateY(${((1 - p) * 40).toFixed(1)}px)`;
+        });
+        stars.warp = P(lt, 4.6, 1.2, E.in3) * 3;
+        box.style.opacity = (1 - P(lt, 5.2, 0.6, E.in3)).toFixed(3);
+      };
+    }, 6.0);
+  }
+
+  // G1. 跨学科与严谨
+  async function rigor() {
+    sfx('whoosh');
+    const tiles = [
+      ['物理 · 天文', '辐射平衡与宜居带', 'T_eq = [L(1−A)/16πσa²]^¼', 'Kopparapu et al. 2013'],
+      ['化学 · 地球科学', '行星恒温器', 'W = W₀(pCO₂)^0.3 e^((T−288)/13.7)', 'Walker et al. 1981'],
+      ['生物 · 古生物', '撞击点标定', '9 个球冠 → 地表 13%', 'Kaiho & Oshima 2017'],
+      ['历史唯物主义', '生产力与生产关系', 'C = (P − R)/R > 0.6 ⇒ 质变', '《〈政治经济学批判〉序言》'],
+      ['复杂系统', '基于主体的文明沙盘', 'dN/dt = rN(1 − N/K)', 'Epstein & Axtell 1996'],
+      ['概率 · 混沌', '蒙特卡洛与蝴蝶效应', 'λ ≈ 0.906 · 10 000 次抽样', 'Lorenz 1963；Sandberg 2018'],
+    ];
+    const stats = [[29, '项参数与事实'], [5, '级置信等级'], [63, '项单元测试'], [13, '条经典原文'], [20, '张知识卡']];
+    await scene((box) => {
+      const head = el('div', { class: 'f-center f-serif', style: 'top:70px;font-size:46px;letter-spacing:0.12em' }, '跨学科，而且可以核验');
+      const ts = tiles.map((d, i) => el('div', { class: 'f-tile', style: `left:${130 + (i % 3) * 460}px;top:${170 + Math.floor(i / 3) * 186}px` },
+        el('div', { class: 'k' }, d[0]), el('div', { class: 't f-serif' }, d[1]), el('div', { class: 'm f-mono' }, d[2]), el('div', { class: 's' }, d[3])));
+      const ss = stats.map((d, i) => el('div', { class: 'f-stat', style: `left:${150 + i * 266}px;top:590px` }, el('b', {}, '0'), el('span', {}, d[1])));
+      const foot = el('div', { class: 'f-center f-p', style: 'top:745px;font-size:21px' }, '每个参量登记参考值、可行范围、出处与置信等级（实证 · 估计 · 推测 · 争议 · 示意）；结论统一表述为“在已知规律与本模型假设下”');
+      box.append(head, ...ts, ...ss, foot);
+      say('物理、化学、生物、历史唯物主义与概率论，在同一套确定性推演引擎里相互咬合；每个结论都可复现、可核验。', 7.4);
+      return (lt) => {
+        head.style.opacity = P(lt, 0, 0.5).toFixed(3);
+        ts.forEach((c, i) => {
+          const p = P(lt, 0.3 + i * 0.16, 0.7, E.out3);
+          c.style.opacity = p.toFixed(3);
+          c.style.transform = `perspective(900px) rotateX(${((1 - p) * 70).toFixed(1)}deg) translateY(${((1 - p) * 30).toFixed(1)}px)`;
+        });
+        ss.forEach((c, i) => {
+          const p = P(lt, 2.0 + i * 0.18, 1.0, E.out3);
+          c.style.opacity = clamp(p * 2).toFixed(3);
+          c.firstChild.textContent = String(Math.round(stats[i][0] * p));
+        });
+        foot.style.opacity = P(lt, 3.4, 0.6).toFixed(3);
+        box.style.opacity = (1 - P(lt, 10.4, 0.5, E.in3)).toFixed(3);
+      };
+    }, 11);
+  }
+
+  // G2. 技术架构与“LLM 提议，模型裁决”
+  async function architecture() {
+    sfx('whoosh');
+    const layers = [
+      ['体验层', '序章 · 五幕 · 终章；导览与自由模式；参数台与观测档案', ['acts', 'Director', 'ui']],
+      ['表现层', 'Three.js 着色器、HDR 泛光、实例化沙盘、自适应画质；Web Audio 生成声音', ['WebGL', 'render', 'audio']],
+      ['智能层', '观测者·零号：大模型只输出参数提议；检索增强解释；离线兜底', ['llm', 'RAG', 'offline']],
+      ['模拟层', '确定性推演引擎：纯函数、可复现、有单元测试；沙盘抽样在后台线程', ['sim', 'Worker', 'Vitest']],
+      ['数据层', '参数注册表、理论库、知识卡、旁白：一份数据驱动界面、引擎、校验与文档', ['params', 'theory', 'docs']],
+    ];
+    await scene((box) => {
+      const head = el('div', { class: 'f-center f-serif', style: 'top:60px;font-size:46px;letter-spacing:0.12em' }, '大模型提议，确定性引擎裁决');
+      const ls = layers.map((d, i) => el('div', { class: 'f-layer', style: `top:${150 + i * 100}px` },
+        el('div', { class: 'nm f-serif' }, d[0]), el('div', { class: 'ds' }, d[1]), el('div', { class: 'mods' }, d[2].map((m) => el('i', {}, m)))));
+      const gate = el('div', { class: 'f-abs', style: 'left:1360px;top:250px;width:200px;padding:12px;border-radius:12px;border:1px solid #f5c66b;background:rgba(30,22,6,0.9);font-size:15px;line-height:1.75' },
+        el('div', { class: 'f-gold f-serif', style: 'font-size:20px' }, '校验闸门'),
+        ...['参数存在', '不是只读事实', '类型与范围', '持有对应钥匙', '一次最多 4 项'].map((x) => el('div', {}, '✓ ', x)));
+      const dot = el('div', { class: 'f-abs', style: 'width:16px;height:16px;border-radius:50%;background:#3ff2e6;box-shadow:0 0 18px #3ff2e6' });
+      const chips = el('div', { class: 'f-center', style: 'top:676px' }, ...['单文件约 1.6 MB', '双击即可离线运行', '零网络请求', '手机可看', 'OpenAI 兼容接口'].map((x) => el('span', { class: 'f-pill' }, x)));
+      box.append(head, ...ls, gate, dot, chips);
+      say('大模型只把问题翻译成参数提议；提议必须通过校验闸门，所有数值由推演引擎计算。整部作品是一个单文件，双击即可离线运行。', 8.4);
+      return (lt) => {
+        head.style.opacity = P(lt, 0, 0.5).toFixed(3);
+        ls.forEach((l, i) => {
+          const p = P(lt, 0.3 + i * 0.18, 0.7, E.outExpo);
+          l.style.opacity = p.toFixed(3);
+          l.style.transform = `translateX(${((1 - p) * (i % 2 ? 160 : -160)).toFixed(1)}px)`;
+        });
+        gate.style.opacity = P(lt, 2.2, 0.5).toFixed(3);
+        // 提议流过智能层 → 闸门 → 模拟层 → 表现层
+        const k = clamp((lt - 2.6) / 4.2);
+        const path = [[300, 391], [1340, 391], [1460, 330], [1340, 491], [300, 491], [300, 291]];
+        const seg = Math.min(path.length - 2, Math.floor(k * (path.length - 1)));
+        const f = k * (path.length - 1) - seg;
+        const a = path[seg], b = path[seg + 1];
+        dot.style.left = `${lerp(a[0], b[0], E.io3(f)) - 8}px`;
+        dot.style.top = `${lerp(a[1], b[1], E.io3(f)) - 8}px`;
+        dot.style.opacity = (lt > 2.6 && k < 1 ? 1 : 0).toFixed(3);
+        [...chips.children].forEach((c, i) => {
+          const p = P(lt, 5.6 + i * 0.16, 0.5, E.outBack);
+          c.style.opacity = clamp(p).toFixed(3);
+          c.style.transform = `translateY(${((1 - p) * 14).toFixed(1)}px)`;
+        });
+        box.style.opacity = (1 - P(lt, 10.4, 0.5, E.in3)).toFixed(3);
+      };
+    }, 11);
+  }
+
+  // G3. 思想内核：机制与原理的对应
+  async function theory() {
+    sfx('whoosh');
+    const pairs = [
+      ['知识即权限：理解才能改变', '自由是对必然的认识', '恩格斯《反杜林论》'],
+      ['文明沙盘：矛盾积累到质变', '生产力与生产关系的矛盾运动', '马克思《〈政治经济学批判〉序言》'],
+      ['不同政体处在不同阶段', '社会发展的统一性与多样性', '《马克思主义基本原理》'],
+      ['蝴蝶效应与平行宇宙', '必然性通过偶然性开辟道路', '唯物辩证法'],
+      ['行星恒温器与生态张力', '人与自然', '恩格斯（1876）'],
+      ['终章的历史合力', '无数个力的平行四边形', '恩格斯致布洛赫（1890）'],
+      ['未来之钥人人持有', '人民群众是历史的创造者', '历史唯物主义'],
+    ];
+    await scene((box) => {
+      const head = el('div', { class: 'f-center f-serif', style: 'top:50px;font-size:44px;letter-spacing:0.12em' }, '理论不是口号，而是机制的根据');
+      const s = svg('svg', { width: VW, height: VH, style: 'position:absolute;left:0;top:0' });
+      const L = pairs.map((p, i) => el('div', { class: 'f-map', style: `left:130px;top:${140 + i * 92}px;width:470px;text-align:right` }, p[0]));
+      const R = pairs.map((p, i) => el('div', { class: 'f-map', style: `left:1000px;top:${140 + i * 92}px` }, el('span', { class: 'f-serif f-gold' }, p[1]), el('small', {}, p[2])));
+      const curves = pairs.map((_, i) => {
+        const y = 140 + i * 92 + 28;
+        const pth = svg('path', { d: `M600 ${y} C 800 ${y}, 800 ${y}, 1000 ${y}`, stroke: '#a497ff', 'stroke-width': 2, fill: 'none', 'stroke-dasharray': 400, 'stroke-dashoffset': 400 });
+        s.append(pth);
+        return pth;
+      });
+      box.append(head, s, ...L, ...R);
+      say('马克思主义理论不是贴在作品外的口号，而是核心机制的哲学根据；作品里只在关键节点用原文点题。', 7.6);
+      return (lt) => {
+        head.style.opacity = P(lt, 0, 0.5).toFixed(3);
+        pairs.forEach((_, i) => {
+          const t0 = 0.4 + i * 0.55;
+          const a = P(lt, t0, 0.5, E.out3);
+          L[i].style.opacity = a.toFixed(3);
+          L[i].style.transform = `translateX(${((1 - a) * -40).toFixed(1)}px)`;
+          curves[i].setAttribute('stroke-dashoffset', String(400 * (1 - P(lt, t0 + 0.3, 0.6, E.io3))));
+          const b = P(lt, t0 + 0.7, 0.5, E.out3);
+          R[i].style.opacity = b.toFixed(3);
+          R[i].style.transform = `translateX(${((1 - b) * 40).toFixed(1)}px)`;
+          R[i].style.borderColor = b > 0.9 ? 'rgba(245,198,107,0.55)' : '';
+        });
+        box.style.opacity = (1 - P(lt, 10.4, 0.5, E.in3)).toFixed(3);
+      };
+    }, 11);
+  }
+
+  // G4. 应用与传播
+  async function uses() {
+    sfx('whoosh');
+    const ic = (d) => `<svg viewBox="0 0 64 64" fill="none" stroke="#3ff2e6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+    const apps = [
+      [ic('<path d="M8 54h48M12 54V26l20-14 20 14v28M24 54V36h16v18"/><circle cx="32" cy="24" r="4"/>'), '科技馆展陈', '导览模式适合大屏循环播放；自由模式适合触摸屏互动'],
+      [ic('<path d="M8 14h48v32H8zM22 54h20M32 46v8"/><path d="M18 36l8-8 6 6 12-12"/>'), '课堂教学', '五个学段、三档讲解深度；从小学科学课到高校通识课'],
+      [ic('<path d="M32 8l6 14 15 1-12 9 4 15-13-8-13 8 4-15-12-9 15-1z"/>'), '思政育人', '必然与自由、人与自然、历史合力：在操作中理解原理'],
+      [ic('<rect x="18" y="6" width="28" height="52" rx="5"/><path d="M28 50h8"/><path d="M26 20h12M26 28h12M26 36h8"/>'), '网络传播', '单文件网页、手机可看；“我的宇宙”海报一键分享'],
+    ];
+    await scene((box) => {
+      const head = el('div', { class: 'f-center f-serif', style: 'top:120px;font-size:46px;letter-spacing:0.12em' }, '给谁用，在哪里用');
+      const cs = apps.map((a, i) => el('div', { class: 'f-app', style: `left:${100 + i * 360}px;top:260px` }, el('div', { html: a[0] }), el('div', { class: 't f-serif' }, a[1]), el('div', { class: 'd' }, a[2])));
+      box.append(head, ...cs);
+      say('它可以是科技馆里的展项，也可以是课堂与思政课上的一间实验室。', 5.6);
+      return (lt) => {
+        head.style.opacity = P(lt, 0, 0.5).toFixed(3);
+        cs.forEach((c, i) => {
+          const p = P(lt, 0.3 + i * 0.22, 0.8, E.outBack);
+          c.style.opacity = clamp(p).toFixed(3);
+          c.style.transform = `translateY(${((1 - p) * 60).toFixed(1)}px) rotate(${((1 - p) * (i % 2 ? 4 : -4)).toFixed(2)}deg)`;
+          const pathEls = c.querySelectorAll('path,circle,rect');
+          pathEls.forEach((pe) => { pe.style.strokeDasharray = '220'; pe.style.strokeDashoffset = String(220 * (1 - P(lt, 0.6 + i * 0.22, 1.2, E.io3))); });
+        });
+        box.style.opacity = (1 - P(lt, 6.6, 0.5, E.in3)).toFixed(3);
+      };
+    }, 7.2);
+  }
+
+  // 段落标题（深度交互）
+  async function sectionTitle(big, small, dur = 3.4) {
+    sfx('whoosh');
+    const t = chars(big, 'f-serif');
+    await scene((box) => {
+      const a = el('div', { class: 'f-center f-h2', style: 'top:360px;font-size:64px;letter-spacing:0.2em' }, t.el);
+      const b = el('div', { class: 'f-center f-p', style: 'top:460px;letter-spacing:0.18em' }, small);
+      box.append(a, b);
+      return (lt) => {
+        animChars(t.list, lt, { delay: 0.1, stagger: 0.07, dur: 0.6, dy: 0, blur: 14, sc: 1.4, out: dur - 0.7 });
+        b.style.opacity = (P(lt, 0.6, 0.5) * (1 - P(lt, dur - 0.6, 0.4))).toFixed(3);
+      };
+    }, dur);
+  }
+
+  // H. 片尾
+  async function closing() {
+    const l1 = chars('文明的诞生，是一场低概率的奇迹。', 'f-serif');
+    const l2 = chars('而未来的钥匙，握在每一个人手里。', 'f-serif f-gold');
+    const t1 = chars(CFG.title, 'f-serif');
+    await scene((box) => {
+      const a = el('div', { class: 'f-center', style: 'top:300px;font-size:46px;letter-spacing:0.14em;text-shadow:0 2px 20px #000' }, l1.el);
+      const b = el('div', { class: 'f-center', style: 'top:380px;font-size:46px;letter-spacing:0.14em;text-shadow:0 2px 20px #000' }, l2.el);
+      const logo = el('div', { class: 'f-center', style: 'top:290px' },
+        el('div', { style: 'font-size:150px;letter-spacing:0.16em;text-shadow:0 0 40px rgba(245,198,107,0.5)' }, t1.el),
+        el('div', { class: 'f-serif f-gold', style: 'font-size:30px;letter-spacing:0.4em;margin-top:6px' }, CFG.subtitle),
+        el('div', { class: 'f-p', style: 'margin-top:26px;font-size:22px' }, [CFG.team, CFG.school].filter(Boolean).join(' · ')),
+        CFG.members ? el('div', { class: 'f-p', style: 'margin-top:6px;font-size:18px;color:#a9aeca' }, CFG.members) : null,
+        el('div', { class: 'f-p', style: 'margin-top:16px;font-size:16px;color:#8d93b3' }, '画面均为作品实际运行录制 · 地球影像来自 NASA 公有领域'));
+      box.append(a, b, logo);
+      say('文明的诞生，是一场低概率的奇迹；而未来的钥匙，握在每一个人手里。', 6);
+      return (lt) => {
+        animChars(l1.list, lt, { delay: 0.3, stagger: 0.07, dur: 0.8, dy: 10, blur: 12, out: 6.2 });
+        animChars(l2.list, lt, { delay: 2.4, stagger: 0.07, dur: 0.8, dy: 10, blur: 12, out: 6.4 });
+        t1.list.forEach((c, i) => {
+          const p = P(lt, 7.2 + i * 0.12, 0.9);
+          c.style.opacity = p.toFixed(3);
+          c.style.filter = p < 1 ? `blur(${((1 - p) * 12).toFixed(1)}px)` : 'none';
+        });
+        [...logo.children].slice(1).forEach((c, i) => (c.style.opacity = P(lt, 8.0 + i * 0.4, 0.6).toFixed(3)));
+        if (lt > 7.0) setBg(lerp(bgOp, 0.9, 0.04));
+        box.style.opacity = (1 - P(lt, 14.2, 1.2, E.io3)).toFixed(3);
+        if (lt > 14.2) stars.op = 1 - P(lt, 14.2, 1.2);
+      };
+    }, 15.6);
+  }
+
+  /* ═══════════════ 作品操作演示 ═══════════════ */
+  const q = (sel, root = document) => root.querySelector(sel);
+  const toolBtn = (label) => [...document.querySelectorAll('.hud .tools button')].find((b) => b.textContent.includes(label));
+  const civ = () => dir.acts.civ;
+
+  async function scrollPanelTo(elem, dur = 0.8) {
+    const panel = app.panel.el;
+    const from = panel.scrollTop;
+    const to = Math.max(0, elem.offsetTop - 60);
+    await tween(dur, (k) => (panel.scrollTop = lerp(from, to, k)));
+  }
+
+  async function demoConsole() {
+    document.body.classList.add('film-own');
+    await dir.goTo('hall');
+    await wait(0.6);
+    await showCursor(true);
+    say('在任何一幕都能打开参数台：拖动任意参量，推演引擎立刻重算六层判定。', 5.6);
+    await click(toolBtn('参数台'), () => app.toggleDrawer('console', true));
+    await wait(0.6);
+    const consoleEl = app.console.el;
+    const orbit = q('#p-orbit_a', consoleEl);
+    await drag(orbit, 2.4, 2.2);
+    const chainRow = document.querySelectorAll('.chain .layers li')[1];
+    highlight(chainRow, '<b>实时读数</b> T_eq 164 K · 冰封', 3.2);
+    say('把轨道推到 2.4 天文单位：平衡温度跌到 164 K，行星冰封，链条在 L1 断裂。', 5.4);
+    await wait(3.2);
+    await drag(orbit, 1, 1.4);
+    const alphas = q('#p-alphas_dev', consoleEl);
+    say('再把强相互作用改变 0.8%：恒星造不出碳或氧，宇宙从源头上就不会有生命。', 5.4);
+    await drag(alphas, 0.8, 1.8);
+    highlight(q('.cverdict', consoleEl), '<b>链条在 L0 断裂</b>', 2.8, 'left');
+    await wait(3.0);
+    const reset = [...consoleEl.querySelectorAll('button')].find((b) => b.textContent.includes('恢复为我们的宇宙'));
+    await click(reset);
+    await wait(0.6);
+    await click(q('.x', consoleEl), () => app.toggleDrawer('console', false));
+  }
+
+  async function demoSandbox() {
+    say('第⑤幕的文明沙盘：数百座聚落在大陆上耕作、通商、争战，历史在这里涌现。', 6);
+    const dot = document.querySelectorAll('.dots button')[5];
+    await click(dot, () => void dir.goTo('civ'));
+    await until(() => app.state.act === 'civ' && !!civ().sb && !app.panel.el.hidden, 10);
+    await wait(1.4);
+    document.body.classList.add('film-sb');
+    const c = civ();
+    app.state.setParams({ coop: 0.6, eco: 0.5, openness: 0.65, reform: 0.5 });
+    c.newRun(c.paramsFromState(), true);
+    // 演示用推演：危机自动处理，结局不弹窗，不计入墓园
+    c.userRun = false;
+    c.sb.interactive = false;
+    for (let i = 0; i < 300; i++) {
+      c.sb.step();
+      if (c.sb.pendingCrisis) c.sb.resolveCrisis('wait');
+    }
+    c.table.sync(true);
+    c.feed.clear();
+    c.feed.push(c.sb.events.slice(-14));
+    c.refreshUi(true);
+    c.refresh();
+    c.setSpeed(2);
+    c.setPlaying(true);
+    void app.rig.to(app.tw, { dist: 9.2, el: 0.92 }, 2000);
+    highlight(q('.sb-dock'), '<b>播放 · 倍速 · 时间轴 · 干预工具</b>', 3, 'above');
+    await wait(3.0);
+    // 观察一座大城市并俯冲
+    const sb = c.sb;
+    const big = sb.settlements.filter((s) => s.pop > 0 && !s.ruined).sort((a, b) => b.pop - a.pop)[1];
+    const world = c.table.settlementPos(big.id).applyMatrix4(c.table.group.matrixWorld);
+    const sp = project(world);
+    say('点击任意聚落，查看它的人口、时代、社会形态，以及它自己的历史；滚轮可以一直拉近到楼群。', 6.2);
+    await moveTo(sp.x, sp.y, 0.8);
+    ripple(cur.x, cur.y);
+    sfx('click');
+    c.click(big.y * 72 + big.x, big);
+    c.setPlaying(false);
+    await scrollPanelTo(q('.insp', app.panel.el), 0.8);
+    void app.rig.to(app.tw, { target: world, dist: 1.5, el: 0.62 }, 2600);
+    void showCursor(false);
+    await wait(3.4);
+    void app.rig.to(app.tw, { target: world.clone().multiplyScalar(0.4), dist: 6.4, el: 0.85 }, 2000);
+    await wait(2.0);
+    c.setPlaying(true);
+    await showCursor(true);
+    // 瘟疫
+    say('开放带来技术，也带来瘟疫：疫情会沿着商路蔓延。', 4.6);
+    const plagueBtn = [...document.querySelectorAll('.sb-tool')].find((b) => b.textContent.includes('瘟疫'));
+    await click(plagueBtn);
+    const port = sb.settlements.filter((s) => s.pop > 20 && s.coast && s.plague === 0 && !s.ruined).sort((a, b) => sb.routes.filter((r) => r.a === b.id || r.b === b.id).length - sb.routes.filter((r) => r.a === a.id || r.b === a.id).length)[0] || big;
+    const pp = project(c.table.settlementPos(port.id).applyMatrix4(c.table.group.matrixWorld));
+    await moveTo(pp.x, pp.y, 0.8);
+    ripple(cur.x, cur.y, '#9dff6a');
+    sfx('click');
+    c.click(port.y * 72 + port.x, port);
+    await wait(3.4);
+    await click([...document.querySelectorAll('.sb-tool')].find((b) => b.textContent.includes('观察')));
+    // 拖动合作程度
+    await scrollPanelTo(q('#p-coop', app.panel.el).closest('.sec'), 0.7);
+    say('把合作程度拖到 0.1：战火立刻沿着边境燃起。', 4.6);
+    await drag(q('#p-coop', app.panel.el), 0.1, 1.6);
+    await wait(1.6);
+    // 镜头飞到战争前线
+    const war = c.sb.wars.find((w) => w.front.length > 4);
+    if (war) {
+      const fp = c.table.cellPos(war.front[Math.floor(war.front.length / 2)]).applyMatrix4(c.table.group.matrixWorld);
+      void showCursor(false);
+      await app.rig.to(app.tw, { target: fp, dist: 3.0, el: 0.78 }, 1400);
+      await wait(1.8);
+      void app.rig.to(app.tw, { target: fp.clone().multiplyScalar(0), dist: 9.2, el: 0.92 }, 1400);
+      await wait(1.0);
+      await showCursor(true);
+    } else await wait(2.0);
+    // 回溯
+    const range = q('.sb-time input');
+    const back = Math.max(10, c.sb.t - 110);
+    say('拖回时间轴：历史从过去重新推演；面板里的灰色虚线，是原来那条历史。', 5.6);
+    await drag(range, back, 1.6);
+    c.sb.interactive = false;
+    await wait(0.5);
+    await scrollPanelTo(q('#p-coop', app.panel.el).closest('.sec'), 0.4);
+    await drag(q('#p-coop', app.panel.el), 0.85, 1.2);
+    await click(q('.sb-play'));
+    await scrollPanelTo(q('canvas.chart', app.panel.el), 0.7);
+    highlight(q('canvas.chart', app.panel.el), '<b>灰色虚线</b>：回溯前的分支', 3.4, 'left');
+    await wait(3.6);
+  }
+
+  async function demoTwin() {
+    say('另一个你：初始条件只差百万分之一的两个世界，按指数分道扬镳。', 5.6);
+    const btn = [...app.panel.el.querySelectorAll('button')].find((b) => b.textContent.includes('另一个你'));
+    await scrollPanelTo(btn, 0.6);
+    await click(btn, () => void civ().twin());
+    await wait(4.6);
+    const ok = q('.modal .btns .btn.primary');
+    await click(ok, () => app.modals.close('ok'));
+  }
+
+  async function demoObserver() {
+    say('观测者·零号：大模型把问题翻译成参数提议，校验闸门把关，数值全部由推演引擎计算。', 6.4);
+    await click(toolBtn('零号'), () => app.toggleDrawer('observer', true));
+    await wait(0.4);
+    await typeInto(q('#ask-input'), '如果没有月球会怎样？');
+    await click(q('.ask .btn.primary'), () => q('.ask').requestSubmit());
+    await wait(3.6);
+    highlight(q('.drawer .msgs .msg.ai:last-child') || q('.drawer .msgs'), '<b>沙盒推演</b>：不影响当前旅程', 3, 'left');
+    say('没有网络时，规则解析与预置回答自动兜底；所有调参提议同样经过校验与沙盒推演。', 5.6);
+    await wait(3.4);
+    await click(q('.drawer .x'), () => app.toggleDrawer('observer', false));
+  }
+
+  async function demoArchive() {
+    say('观测档案：编年史、知识卡、参数注册表、因果图与理论对照，全部可以查证。', 6);
+    await click(toolBtn('档案'), () => app.toggleDrawer('archive', true));
+    await wait(1.4);
+    const tab = (n) => [...app.archive.el.querySelectorAll('.tabs button')].find((b) => b.textContent === n);
+    await click(tab('参数注册表'));
+    await wait(1.8);
+    await click(tab('因果图'));
+    await wait(1.8);
+    await click(tab('理论对照'));
+    await wait(1.6);
+    await click(q('.x', app.archive.el), () => app.toggleDrawer('archive', false));
+    await showCursor(false);
+  }
+
+  /* ═══════════════ 主线：作品自身的导览 ═══════════════ */
+  async function intoApp() {
+    say('下面是作品的实际运行画面。', 2.6);
+    const boot = q('.boot');
+    void fadeBg(0, 1.4);
+    void tween(1.2, (k) => (stars.op = 1 - k));
+    await wait(1.0);
+    await showCursor(true);
+    const btn = boot && boot.querySelector('.choices .btn.primary');
+    await click(btn, () => {
+      spine = true;
+      document.body.classList.add('film-spine');
+      btn.click();
+    });
+    void showCursor(false);
+  }
+
+  /* ═══════════════ 导演 ═══════════════ */
+  async function main() {
+    await wait(0.05);
+    await coldOpen();
+    await titleCard();
+    await question();
+    await concept();
+    await structure();
+    stars.warp = 0;
+    await intoApp();
+    await until(() => app.state.mode === 'guided', 10);
+    await until(() => app.state.mode === 'free', 600);
+    await wait(2.4);
+    spine = false;
+    document.body.classList.remove('film-spine');
+    if (cardNow && !cardNow.exitAt) cardNow.exitAt = T;
+
+    // 深度交互
+    setBg(0);
+    stars.op = 0;
+    void fadeBg(1, 0.6);
+    await wait(0.6);
+    document.body.classList.add('film-own');
+    stars.op = 1;
+    await sectionTitle('深度交互', '实时调参 · 文明沙盘 · 蝴蝶效应 · 观测者 · 观测档案');
+    void tween(0.5, (k) => (stars.op = 1 - k));
+    const toHall = dir.goTo('hall');
+    void fadeBg(0, 0.9);
+    await toHall;
+    await demoConsole();
+    await demoSandbox();
+    await demoTwin();
+    await demoObserver();
+    await demoArchive();
+    document.body.classList.remove('film-sb');
+    capOn = null;
+
+    // 动态图形段落：背景回到实验大厅
+    void fadeBg(0.93, 0.8);
+    void tween(0.8, (k) => (stars.op = k));
+    void dir.goTo('hall');
+    await wait(0.9);
+    await rigor();
+    await architecture();
+    await theory();
+    await uses();
+    await fadeBg(0.7, 1.0);
+    stars.op = 0.6;
+    app.rig.set({ dist: 9, el: 0.18 });
+    await closing();
+    await wait(0.6);
+    done = true;
+  }
+
+  /* ═══════════════ 每帧 ═══════════════ */
+  window.__film = {
+    async frame(t) {
+      T = t;
+      for (let i = 0; i < 3; i++) {
+        for (const w of waiters.slice()) if (w.cond()) { waiters.splice(waiters.indexOf(w), 1); w.res(); }
+        await flush();
+      }
+      if (appRunning) await window.__vt.advance(1000 / FPS);
+      cx.setTransform(CFG.scale, 0, 0, CFG.scale, 0, 0);
+      cx.clearRect(0, 0, VW, VH);
+      for (const s of shots.slice()) {
+        const lt = T - s.t0;
+        if (!s.dead) s.update(Math.min(lt, s.dur), s);
+        if (s.dead || lt >= s.dur) {
+          shots.splice(shots.indexOf(s), 1);
+          if (s.el) s.el.remove();
+          if (s.onEnd) s.onEnd();
+        }
+      }
+      for (const p of painters.slice()) {
+        if (p.dead) { painters.splice(painters.indexOf(p), 1); continue; }
+        p.fn(T);
+      }
+      updateCap();
+      drawCursor();
+      return { done, t: T, act: app.state.act, mode: app.state.mode };
+    },
+    data() {
+      const caps = captions.map((c) => ({ start: +c.start.toFixed(2), end: +Math.min(c.end, c.start + 12).toFixed(2), text: c.text, own: c.own }));
+      return { events, captions: caps, duration: T };
+    },
+  };
+  main().catch((e) => { console.error('film error', e && e.stack || e); done = true; });
+})();

@@ -1,0 +1,54 @@
+<chapter id="t5" no="05" title="依赖、许可与 AI 使用" en="DEPENDENCIES · LICENSES · AI DISCLOSURE" art="16_exhibit">
+<p>本章如实交代作品用了哪些第三方资源、各自以什么许可证分发，以及人工智能工具在研发与运行时的使用边界。所有许可证全文随作品提供，位于 <code>licenses/</code>。</p>
+</chapter>
+
+<h2 id="t5-1"><span class="no">5.1</span>第三方代码与依赖</h2>
+
+<table>
+<thead><tr><th style="width:26%">资源</th><th style="width:10%">版本</th><th style="width:14%">授权</th><th>用途与分发方式</th></tr></thead>
+<tbody>
+<tr><td>three.js（含 EffectComposer、UnrealBloomPass、OutputPass）</td><td>0.186</td><td>MIT</td><td>WebGL2 渲染核心，构建时打包进单文件</td></tr>
+<tr><td>思源宋体 Heavy（Noto Serif SC Black）</td><td>Noto CJK main</td><td>SIL OFL 1.1</td><td>标题字体；按实际用字子集化后以 data URI 内联，约 416 KB</td></tr>
+<tr><td>JetBrains Mono Regular</td><td>2.304</td><td>SIL OFL 1.1</td><td>数据读数字体；子集化后内联，约 30 KB</td></tr>
+<tr><td>NASA Blue Marble / Earth at Night 2012</td><td>—</td><td>公有领域</td><td>终章“此刻的地球”昼夜纹理，缩放至 1024×512 后内联，使用时注明 NASA</td></tr>
+</tbody>
+</table>
+
+<p>开发期依赖（不随作品分发）：Vite、<code>vite-plugin-singlefile</code>、TypeScript、Vitest、tsx、<code>@types/three</code>，以及 Python 侧的 fontTools 与 Pillow。作品的<b>运行时第三方依赖只有 three.js 一项</b>——这正是 1.67 MB 单文件成立的前提。</p>
+
+<p>字体的子集化属于 OFL 允许的修改，CSS 中以 “GE Serif”“GE Mono” 引用，未使用保留字体名；NASA 影像按影像使用指南注明来源，不暗示 NASA 对作品的认可。</p>
+
+<h2 id="t5-2"><span class="no">5.2</span>原创内容与引用边界</h2>
+
+<ul>
+<li>世界观、命名、界面、全部视觉设计与程序化着色器代码为本团队原创。</li>
+<li>声音全部由 Web Audio 实时合成，未使用任何音频素材；演示视频的配乐同样由程序生成。</li>
+<li>马克思主义经典引文为简短合理引用，译文出自《马克思恩格斯选集》（人民出版社，2012 年第三版），出处在作品内逐条标注。</li>
+<li>1962 年 B-59 潜艇、1983 年预警误报等历史事件依据公开史料叙述，未使用任何影像或录音。</li>
+<li>作品只借鉴中国硬科幻作品的宇宙哲学气质，不使用任何现有作品的专有名词、角色与原文。</li>
+</ul>
+
+<h2 id="t5-3"><span class="no">5.3</span>人工智能工具的使用边界</h2>
+
+<table>
+<thead><tr><th style="width:20%">环节</th><th style="width:24%">工具</th><th>使用方式与边界</th></tr></thead>
+<tbody>
+<tr><td>设计与编码</td><td>DeepSeek（深度求索，对话式编程助手）</td><td>解读竞赛文件、起草设计案、生成源代码初版并迭代、撰写作品内文案与文档初稿、编写演示视频渲染程序。团队负责方向、审核与全部否决权，每轮决策记入《决策日志》</td></tr>
+<tr><td>文档图像</td><td>ChatGPT 网页版图像生成</td><td>仅用于文档扉页、概念图与文创效果图，图上与图注均标注“AI 生成”；<b>作品运行画面不含任何 AI 生成图像</b></td></tr>
+<tr><td>演示视频解说</td><td>Google Cloud Text-to-Speech（Chirp3-HD）</td><td>按《旁白文稿》逐句合成中文解说，团队审核文本与语速；画面为作品实机逐帧录制，片尾注明</td></tr>
+<tr><td>运行时（可选）</td><td>OpenAI 兼容服务（DeepSeek / 通义千问 / 智谱 GLM / Kimi 等）</td><td>只把观众的自然语言翻译成参数提议，必须通过校验闸门；所有数值由引擎计算。作品不内置任何 Key，不联网时自动回落到规则引擎</td></tr>
+</tbody>
+</table>
+
+<p>运行时生成的内容在界面上有明确标识：在线回答标“AI 生成”，在线取名的文明在链条上注明“名字由 AI 生成”，离线回答标“离线缓存 · AI 辅助撰写”，程序取名的文明标“名字由程序生成”。作品不收集观众数据；墓园记录、留言与大模型配置只保存在本机浏览器（localStorage / sessionStorage）。</p>
+
+<h2 id="t5-4"><span class="no">5.4</span>代码与文档的一致性</h2>
+
+<p>技术文档最容易失效的地方是“文档里的数字早就不对了”。本项目用三条机制压制这种漂移：</p>
+<ol>
+<li><b>单一数据源</b>：<code>src/data/params.ts</code> 的参数注册表同时驱动滑杆范围、引擎校验、LLM 闸门与附录的参数表；改动一处，四处同时生效。</li>
+<li><b>文档由脚本生成</b>：<code>npm run docs</code> 重新计算并写出《参数与文献》《关键数值》《旁白文稿》《知识卡》等数据类文档，本文附录 A、B 也由同一注册表在构建 PDF 时渲染。</li>
+<li><b>图表由引擎导出</b>：<code>scripts/figdata.ts</code> 调用引擎计算结果，<code>scripts/figures.py</code> 只负责绘图，不写死任何数字。</li>
+</ol>
+
+<p>因此，若代码变更后未重新生成文档，<code>npm run docs</code> 的 diff 会直接暴露出来；这也是我们把文档生成放进日常构建而不是只在提交前手动整理的原因。</p>

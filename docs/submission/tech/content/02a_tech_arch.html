@@ -1,0 +1,110 @@
+<chapter id="c2" no="02" title="核心技术" en="CORE TECHNOLOGY · DEEP DIVE" art="10_tech">
+<p>神经符号协同的 AI 观测者、六层因果筛选引擎、基于主体的微观文明推演、不确定性量化与混沌分析、GPU 程序化实时渲染。</p>
+<p>本章逐项剖析作品采用的技术、模型与参数，并给出由作品引擎实测得到的图表。</p>
+</chapter>
+
+<h2 id="s2-1"><span class="no">2.1</span>系统总体架构</h2>
+<p>作品采用“确定性内核 + 智能外壳”的五层架构。最底层是数据层：一份参数注册表同时驱动界面滑杆、引擎判定、大模型校验、观测档案与本文的附表，从结构上保证“界面上显示的、引擎计算的、文档里写的”是同一组数字。其上是模拟层：全部为纯函数的确定性推演引擎，不依赖界面与渲染，可单独测试。智能层只能通过校验闸门向模拟层提交参数提议，不能直接写入任何数值。表现层与体验层负责把引擎状态翻译成画面、声音与叙事。</p>
+
+<div class="diagram">
+<svg viewBox="0 0 760 430" xmlns="http://www.w3.org/2000/svg" font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+  <defs>
+    <linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#0d1430"/><stop offset="1" stop-color="#1a1240"/></linearGradient>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#3ff2e6"/></marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f5c66b"/></marker>
+  </defs>
+  <rect width="760" height="430" rx="10" fill="#05060a"/>
+  <g stroke="#1d2a4d" stroke-width="0.6">
+    <path d="M0 40H760M0 80H760M0 120H760M0 160H760M0 200H760M0 240H760M0 280H760M0 320H760M0 360H760M0 400H760"/>
+    <path d="M60 0V430M120 0V430M180 0V430M240 0V430M300 0V430M360 0V430M420 0V430M480 0V430M540 0V430M600 0V430M660 0V430M720 0V430"/>
+  </g>
+  <text x="22" y="30" fill="#3ff2e6" font-size="11" letter-spacing="3" font-family="JetBrains Mono, Consolas">SYSTEM ARCHITECTURE · 5 LAYERS</text>
+  <!-- 体验层 -->
+  <rect x="22" y="44" width="716" height="58" rx="6" fill="url(#g1)" stroke="#3a4a80"/>
+  <text x="36" y="66" fill="#f5c66b" font-size="13" font-weight="700">体验层 Experience</text>
+  <text x="36" y="88" fill="#c9d4ee" font-size="10.5">章节导演 Director · 导览/自由模式 · 认知坐标与钥匙 · 顿悟解锁 · 名词注释（MutationObserver）· 观测档案</text>
+  <!-- 表现层 -->
+  <rect x="22" y="112" width="716" height="58" rx="6" fill="url(#g1)" stroke="#3a4a80"/>
+  <text x="36" y="134" fill="#f5c66b" font-size="13" font-weight="700">表现层 Rendering &amp; Audio</text>
+  <text x="36" y="156" fill="#c9d4ee" font-size="10.5">Three.js/WebGL2 · 自定义 GLSL 与 onBeforeCompile 注入 · 实例化网格 · 阴影 · HDR 泛光 + ACES · 自适应画质 · Web Audio 合成</text>
+  <!-- 智能层 -->
+  <rect x="22" y="196" width="300" height="106" rx="6" fill="#120c2c" stroke="#7a5cff"/>
+  <text x="36" y="218" fill="#b9a6ff" font-size="13" font-weight="700">智能层 Neuro（大模型）</text>
+  <text x="36" y="240" fill="#c9d4ee" font-size="10.5">① 意图解析：自然语言 → 参数提议 JSON</text>
+  <text x="36" y="258" fill="#c9d4ee" font-size="10.5">④ 检索增强解释：知识卡 · 理论库 · 参数</text>
+  <text x="36" y="276" fill="#c9d4ee" font-size="10.5">离线兜底：23 条规则意图 + 预置回答</text>
+  <text x="36" y="294" fill="#8a96b8" font-size="9.5">OpenAI 兼容接口 · Key 仅存本机浏览器</text>
+  <!-- 闸门 -->
+  <rect x="340" y="214" width="96" height="70" rx="6" fill="#0b1a1c" stroke="#3ff2e6" stroke-width="1.4"/>
+  <text x="388" y="240" fill="#3ff2e6" font-size="12" font-weight="700" text-anchor="middle">② 校验闸门</text>
+  <text x="388" y="258" fill="#a8e8e3" font-size="9.5" text-anchor="middle">注册表 · 类型</text>
+  <text x="388" y="273" fill="#a8e8e3" font-size="9.5" text-anchor="middle">范围 · 钥匙 · ≤4 项</text>
+  <!-- 模拟层 -->
+  <rect x="454" y="196" width="284" height="106" rx="6" fill="#071a18" stroke="#3ff2e6"/>
+  <text x="468" y="218" fill="#3ff2e6" font-size="13" font-weight="700">模拟层 Symbolic（确定性引擎）</text>
+  <text x="468" y="240" fill="#c9d4ee" font-size="10.5">③ 沙盒推演：L0–L5 逐层判定</text>
+  <text x="468" y="258" fill="#c9d4ee" font-size="10.5">恒温器 · K-Pg 球冠 · 文明 ABM · 平均场</text>
+  <text x="468" y="276" fill="#c9d4ee" font-size="10.5">蒙特卡洛 · Lorenz · 未来情景 · 因果图</text>
+  <text x="468" y="294" fill="#8a96b8" font-size="9.5">纯函数 · mulberry32 种子 · 63 项单元测试</text>
+  <path d="M322 249H338" stroke="#b9a6ff" stroke-width="1.6" marker-end="url(#ar)"/>
+  <path d="M436 249H452" stroke="#3ff2e6" stroke-width="1.6" marker-end="url(#ar)"/>
+  <path d="M596 302V318H172V304" stroke="#f5c66b" stroke-width="1.4" fill="none" stroke-dasharray="4 3" marker-end="url(#ag)"/>
+  <text x="384" y="314" fill="#f5c66b" font-size="9.5" text-anchor="middle">引擎结果与出处（数值只能来自这里）</text>
+  <path d="M596 196V172" stroke="#3ff2e6" stroke-width="1.4" marker-end="url(#ar)"/>
+  <text x="604" y="188" fill="#7fd9d2" font-size="9.5">状态与事件日志</text>
+  <!-- 数据层 -->
+  <rect x="22" y="330" width="716" height="78" rx="6" fill="#0c0f1c" stroke="#3a4a80"/>
+  <text x="36" y="352" fill="#f5c66b" font-size="13" font-weight="700">数据层 Single Source of Truth</text>
+  <text x="36" y="374" fill="#c9d4ee" font-size="10.5">参数注册表 29 项（参考值 · 区间 · 出处 · 五级置信）· 名词注释 70 条 · 知识卡 · 马克思主义理论库 · 旁白 · 离线问答</text>
+  <text x="36" y="394" fill="#8a96b8" font-size="9.5">同一份数据驱动：界面滑杆 / 引擎判定 / 大模型校验 / 观测档案 / 本文附表（npm run docs 自动生成）</text>
+</svg>
+</div>
+<p class="center small">图示 2-A　五层架构与一次提问的数据通路（① 提议 → ② 校验 → ③ 推演 → ④ 解释）</p>
+
+<div class="spec">
+<div class="bar">TECH STACK <span>RUNTIME · ZERO NETWORK</span></div>
+<dl>
+<dt>语言与构建</dt><dd>TypeScript（严格模式）· Vite + vite-plugin-singlefile，字体子集化后以 data URI 内联，输出单个约 1.7 MB 的 HTML</dd>
+<dt>三维渲染</dt><dd>Three.js 0.186（WebGL 2）· EffectComposer + UnrealBloomPass（阈值 0.82）· ACES Filmic 色调映射 · PCF 阴影</dd>
+<dt>并行计算</dt><dd>Web Worker 后台抽样（微观沙盘平行宇宙），以 Blob URL 内联，不阻塞渲染线程</dd>
+<dt>随机性</dt><dd>mulberry32 伪随机数发生器；宇宙编号即种子，全部推演可逐位复现</dd>
+<dt>智能接口</dt><dd>OpenAI 兼容 chat/completions，30 秒超时；结构化 JSON 输出 + 本地 Schema 校验</dd>
+<dt>声音</dt><dd>Web Audio API 实时合成底噪、和弦与事件音，无任何音频素材</dd>
+<dt>质量保证</dt><dd>Vitest 63 项单元测试；GitHub Actions 持续集成：测试 → 构建 → 部署到 GitHub Pages</dd>
+</dl>
+</div>
+
+<h2 id="s2-2"><span class="no">2.2</span>神经符号协同：大模型提议，引擎裁决</h2>
+<p>当前人工智能的一个重要研究方向是<em>神经符号人工智能</em>（Neuro-Symbolic AI）：把神经网络在语言理解上的长处，与符号系统在精确推理、可验证性上的长处结合起来<ref n="28">。大模型擅长理解“如果地球离太阳远一点会怎样”这样的自然语言，但它会编造数字；确定性引擎能给出精确、可复现的答案，却听不懂人话。作品的“观测者·零号”把两者组合成一条有分工的流水线，遵循近年“大模型调用外部工具”的范式<ref n="29,30">——大模型只负责<b>提议</b>与<b>讲述</b>，所有数值由引擎<b>裁决</b>。</p>
+
+<h3>四步流水线</h3>
+<ol>
+<li><b>意图解析（神经）</b>：系统提示词中包含参数注册表的摘要，要求模型只输出形如 <code>{"intent","changes","rationale"}</code> 的 JSON，把“让地球离太阳远一点”翻译成 <code>orbit_a: 1.5</code> 这样的参数提议。</li>
+<li><b>校验闸门（符号）</b>：提议必须同时满足五条规则，否则被拒绝并说明原因——参数存在于注册表；不是只读事实；类型正确；在取值范围内（越界值夹回边界并标注）；观众持有对应钥匙。一次最多接受 4 项改动。</li>
+<li><b>沙盒推演（符号）</b>：在当前状态的副本上运行引擎，得到 L0–L5 的逐层结论；涉及文明层时，同时给出 300 个平行宇宙的存活率。沙盒不影响观众正在进行的旅程。</li>
+<li><b>检索增强解释（神经）</b>：按字符二元组重合度，从知识卡、马克思主义理论库与相关参数中检索上下文<ref n="31">；提示词规定数值只能引用引擎结果、理论只能引用库内的标准表述，防止“幻觉”与曲解原意。</li>
+</ol>
+<div class="eqn">$$\operatorname{score}(q,d)=\bigl|\,B(q)\cap B(d)\,\bigr|,\qquad B(s)=\{\,s_i s_{i+1}\mid 1\le i<|s|\,\}$$</div>
+<div class="where"><p>\(B(s)\) 为文本 \(s\) 的字符二元组集合。中文没有空格分词，二元组在不引入分词词典的前提下即可得到稳定的相关度；理论库条目额外按关键词命中加权。</p></div>
+
+<div class="key"><b>为什么这样设计</b>
+<p>闸门是一道“防幻觉防火墙”：即使大模型被诱导输出离谱的参数，也只会得到一条拒绝说明；即使它在解释中想编造数字，提示词与检索上下文中也没有可供编造的来源。没有网络或没有 API Key 时，23 条规则意图与预置回答接管全部功能，带调参的条目同样经过闸门与沙盒——作品在任何环境下都能完整体验。</p>
+</div>
+
+<pre><span class="c">// 校验闸门（src/llm/schema.ts）的拒绝规则，节选</span>
+<span class="k">if</span> (!PARAM_INDEX[id])            reject(<span class="s">'注册表中没有这个参量'</span>)
+<span class="k">if</span> (def.kind === <span class="s">'fact'</span>)       reject(<span class="s">'这是只读的事实，不能修改'</span>)
+<span class="k">if</span> (typeof v !== expected)     reject(<span class="s">'类型不正确'</span>)
+<span class="k">if</span> (v &lt; def.min || v &gt; def.max) clamp(v), note(<span class="s">'越界值已夹回可行范围'</span>)
+<span class="k">if</span> (!keys.has(def.key))        reject(<span class="s">`需要${KEY_NAMES[def.key]}`</span>)
+<span class="k">if</span> (changes.length &gt; 4)        reject(<span class="s">'一次最多调整 4 个参量'</span>)</pre>
+
+<h2 id="s2-3"><span class="no">2.3</span>知识即权限：认知坐标与名词注释网络</h2>
+<p>作品把“学习”做成了探索的动力。钥匙集合同时驱动三个子系统：文明链条的亮起状态、参数滑杆的锁定，以及校验闸门的权限规则——这保证了“观众能改什么”在界面、引擎与 AI 三处完全一致。顿悟解锁的讲解文本按五档认知深度分别撰写，同一个现象（例如行星冰封）对小学生讲“离太阳太远，接收的阳光不够”，对研究生则给出辐射平衡方程与反照率反馈。</p>
+<p>为了让作品真正“向科普靠拢”，界面中出现的全部专业名词都接入了一张<em>名词注释网络</em>：70 个条目覆盖物理、天文、地球科学、生物、复杂系统、概率统计、马克思主义理论、计算机与人工智能八个领域，每条包含一句话释义、科普解释、在本作品中的应用与延伸阅读。</p>
+<ul>
+<li><b>自动标注</b>：用 MutationObserver 监听整个界面的文本变化，新出现的文字节点按“长词优先”的正则表达式匹配术语（避免“温室效应”被“温室”抢先匹配），包上带虚线下划线的标记；悬停显示一句话释义。</li>
+<li><b>双击跳转</b>：左键双击任一术语，导览自动暂停，观测档案打开到“名词解释”页并定位、闪烁该条目。</li>
+<li><b>零干扰</b>：输入框、按钮、字幕与条目标题本身被排除在外；标注造成的 DOM 变动在同一微任务中被丢弃，不会引发循环。</li>
+</ul>
+<fig src="shots/s11_glossary.png" cap="观测档案中的“名词解释”页：双击界面中任一带虚线的术语即跳转到这里，条目按领域分组，含释义、科普解释、在作品中的应用与延伸阅读。" wide dark>

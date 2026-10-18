@@ -1,0 +1,33 @@
+<cover/>
+
+<section class="front">
+<h1 class="plain nonum no-toc" id="abstract">文档说明与摘要</h1>
+<p class="lead">本文件是《创世纪元：AI 文明诞生概率实验室》的<strong>技术文档</strong>，面向评审专家与技术审核，说明作品的技术选型、系统结构、关键算法、工程实现与质量保障，并给出可以逐条复现的验证方式。选题背景、叙事结构、应用场景与成果统计见同批提交的《作品介绍文档》，本文不重复。</p>
+
+<div class="metrics">
+  <div class="metric"><b>5<small>层</small></b><span>“确定性内核 + 智能外壳”的分层架构：数据、模拟、智能、表现、体验</span></div>
+  <div class="metric"><b>69<small>个</small></b><span>源文件、约 13 500 行 TypeScript 与样式，全部为本团队编写</span></div>
+  <div class="metric"><b>63<small>项</small></b><span>单元测试，覆盖公式、逐层判定、可复现性、ABM 与宏观模型一致性</span></div>
+  <div class="metric"><b>0<small>依赖</small></b><span>运行时零第三方请求：字体、影像与 worker 全部内联进单个 HTML</span></div>
+  <div class="metric"><b>1.67<small>MB</small></b><span>单文件交付体积，双击即可离线运行</span></div>
+  <div class="metric"><b>10<sup>4</sup><small>宇宙</small></b><span>德雷克方程蒙特卡洛与 500 宇宙存活率，均可在本机复算</span></div>
+</div>
+
+<table>
+<thead><tr><th style="width:22%">项目</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>文档名称</td><td>创世纪元：AI 文明诞生概率实验室 · 技术文档</td></tr>
+<tr><td>对应代码版本</td><td>2026 年 10 月 18 日构建（<code>dist/index.html</code> 1.67 MB，63 项测试通过）</td></tr>
+<tr><td>配套材料</td><td>《作品介绍文档》、演示视频（5 分 52 秒，1920×1080 / 30 fps）、可运行单文件、源代码与第三方许可证</td></tr>
+<tr><td>阅读对象</td><td>评审专家、技术审核、后续维护者；假定读者具备前端与数值模拟的基本常识</td></tr>
+<tr><td>写作约定</td><td>文中所有数值都由作品自身的引擎计算并可由源码复现；凡引用文献处标注编号，条目见《作品介绍文档》参考文献</td></tr>
+</tbody>
+</table>
+
+<div class="key"><b>本文的组织方式</b>
+<p>第 1 章给出技术目标、技术栈与代码组织；第 2 章逐项剖析五组核心技术（神经符号协同、六层因果引擎、微观文明 ABM、不确定性量化、GPU 程序化渲染）；第 3 章说明系统实现与界面组织；第 4 章给出测试矩阵、性能数据与从零复现的操作步骤；第 5 章交代第三方依赖、许可证与人工智能工具的使用边界；附录收录参数注册表、关键数值与术语表。</p>
+<p>若只想快速核对“能不能跑、跑得对不对”，请直接看 <b>4.4 复现步骤</b> 与 <b>4.1 测试矩阵</b>：三条命令即可在任意装有 Node.js 20 的机器上重建作品并复算全部数值。</p>
+</div>
+</section>
+
+<!--TOC-->

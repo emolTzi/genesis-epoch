@@ -162,6 +162,22 @@ export const PARAMS: ParamDef[] = [
     source: '人类命运共同体；Axelrod 1984（重复博弈中的合作）',
   },
   {
+    id: 'openness', symbol: 'ο', name: '开放交流', layer: 4, discipline: '经济史 / 流行病学',
+    kind: 'number', value: 0.5, min: 0, max: 1, step: 0.05, key: 'civ', confidence: 'yi',
+    reference: '无量纲示意参数',
+    role: '微观沙盘：决定商路多少与技术扩散快慢；瘟疫也沿商路传播',
+    source: '交流互鉴与技术扩散；McNeill《瘟疫与人》（Plagues and Peoples, 1976）关于疾病沿交通网传播的论述',
+    note: '开放带来技术与繁荣，也带来传染病：同一条商路的两面。',
+  },
+  {
+    id: 'reform', symbol: 'ρ', name: '制度弹性', layer: 4, discipline: '马克思主义理论',
+    kind: 'number', value: 0.5, min: 0, max: 1, step: 0.05, key: 'civ', confidence: 'yi',
+    reference: '无量纲示意参数',
+    role: '微观沙盘：生产关系跟上生产力的速度，越高则矛盾积累时生产力受到的桎梏越短',
+    source: '马克思《〈政治经济学批判〉序言》（1859）；生产关系一定要适合生产力状况的规律',
+    note: '对应宏观模型中的调整系数 k（宏观模型固定取 0.5）。只影响调整速度，不改变各社会形态的容纳上限。',
+  },
+  {
     id: 'choice_1962', symbol: '1962', name: '1962 年 B-59 潜艇的选择', layer: 4, discipline: '历史',
     kind: 'choice', value: 'wait', key: 'civ', confidence: 'shi',
     choices: [

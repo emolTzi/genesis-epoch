@@ -1,17 +1,21 @@
 // 顶栏、文明链条（概率筛选）、尺度读数与导览控制条。
 
 import { h, clear, fracText, sup } from './dom';
-import { ACTS, ACT_ORDER, type ActId } from '../data/script';
+import { ACTS, ACT_ORDER, GUIDE_LABEL, type ActId } from '../data/script';
 import type { State } from '../app/state';
 import type { KeyId, Status } from '../sim/types';
+import { liveLayers } from '../sim/live';
+import { chevron, isOpen, onFoldAll, remember } from './fold';
 
 export interface HudHandlers {
   onAct: (id: ActId) => void;
   onMode: () => void;
   onObserver: () => void;
+  onConsole: () => void;
   onArchive: () => void;
   onGraves: () => void;
   onSettings: () => void;
+  onFold: () => void;
   onSound: () => void;
   onGuidePause: () => void;
   onGuideSkip: () => void;
@@ -36,25 +40,37 @@ export class Hud {
   private scaleMark: HTMLElement;
   private modeBtn: HTMLButtonElement;
   private soundBtn: HTMLButtonElement;
+  private foldBtn: HTMLButtonElement;
   private guideFill: HTMLElement;
   private guideTime: HTMLElement;
   private guidePause: HTMLButtonElement;
   private fracEls: HTMLElement[] = [];
+  /** 链条右侧显示实时读数（live）或参数空间存活比例（ladder）。 */
+  private chainMode: 'live' | 'ladder' = 'live';
+  private ladder: number[] | null = null;
+  private modeLbl!: HTMLButtonElement;
+  private noteEl!: HTMLElement;
+  private liveTimer = 0;
+  private chainFold!: HTMLButtonElement;
 
   constructor(private state: State, private on: HudHandlers) {
     this.nowEl = h('div', { class: 'now' });
     this.dotsEl = h('div', { class: 'dots', role: 'navigation', 'aria-label': '章节' });
     this.modeBtn = h('button', { class: 'tool', type: 'button', onclick: () => on.onMode() }, '导览');
     this.soundBtn = h('button', { class: 'tool on', type: 'button', onclick: () => on.onSound(), 'aria-label': '声音' }, '声音');
+    this.foldBtn = h('button', { class: 'tool', type: 'button', title: '收起 / 展开全部面板（快捷键 H）', onclick: () => on.onFold() }, '收起') as HTMLButtonElement;
+    onFoldAll((open) => (this.foldBtn.textContent = open ? '收起' : '展开'));
     this.el = h('header', { class: 'hud' },
       h('div', { class: 'brand' }, h('b', {}, '创世纪元'), h('small', {}, 'AI 文明诞生概率实验室')),
       h('div', { class: 'act-ind' }, this.nowEl, this.dotsEl),
       h('div', { class: 'tools' },
         this.modeBtn,
+        h('button', { class: 'tool accent', type: 'button', title: '参数台：拖动任意参量，六层宇宙立刻重算（快捷键 P）', onclick: () => on.onConsole() }, '参数台'),
         h('button', { class: 'tool', type: 'button', onclick: () => on.onObserver() }, h('span', {}, '零号'), h('span', { class: 'lbl' }, '·提问')),
         h('button', { class: 'tool', type: 'button', onclick: () => on.onArchive() }, '档案'),
         h('button', { class: 'tool', type: 'button', onclick: () => on.onGraves() }, '墓园'),
         h('button', { class: 'tool', type: 'button', onclick: () => on.onSettings() }, '设置'),
+        this.foldBtn,
         this.soundBtn,
       ),
     );
@@ -65,7 +81,7 @@ export class Hud {
     LAYER_LABELS.forEach((label) => {
       const frac = h('span', { class: 'frac' }, '');
       this.fracEls.push(frac);
-      const li = h('li', {}, h('i', {}), h('span', {}, label), frac);
+      const li = h('li', { title: label, 'data-l': label.slice(0, 2) }, h('i', {}), h('span', {}, label), frac);
       this.layerEls.push(li);
       layers.append(li);
     });
@@ -75,13 +91,17 @@ export class Hud {
       this.keyEls.push(s);
       keyrow.append(s);
     });
+    this.modeLbl = h('button', { type: 'button', class: 'chain-mode', title: '切换：实时读数 / 参数空间存活比例', onclick: () => this.toggleChainMode() }, '实时读数 ⇄');
+    this.noteEl = h('div', { class: 'note' });
+    const foldBtn = h('button', { type: 'button', class: 'fold-btn', onclick: () => this.setChainMin(!this.chainEl.classList.contains('min'), true) }, chevron()) as HTMLButtonElement;
+    this.chainFold = foldBtn;
     this.chainEl = h('aside', { class: 'chain', 'aria-label': '文明链条' },
-      h('h4', {}, h('span', {}, '你的文明'), h('span', {}, '参数空间存活比例')),
+      h('h4', {}, h('span', {}, '你的文明'), h('span', { class: 'h4-tools' }, this.modeLbl, foldBtn)),
       this.civEl,
       this.seedEl,
       layers,
       keyrow,
-      h('div', { class: 'note' }, '右侧比例：在本作品设定的参数取值范围内随机抽样，能走过该层的比例。'),
+      this.noteEl,
     );
 
     this.scaleText = h('div', {}, '');
@@ -93,7 +113,7 @@ export class Hud {
     );
 
     this.guideFill = h('i', {});
-    this.guideTime = h('span', { class: 'mono' }, '0:00 / 5:35');
+    this.guideTime = h('span', { class: 'mono' }, '0:00');
     this.guidePause = h('button', { type: 'button', onclick: () => on.onGuidePause() }, '暂停');
     this.guideEl = h('div', { class: 'guide-bar', hidden: true },
       h('span', {}, '导览'),
@@ -104,19 +124,70 @@ export class Hud {
       h('button', { type: 'button', onclick: () => on.onGuideExit() }, '退出导览'),
     );
 
+    this.setChainMin(!isOpen('chain', true));
+    onFoldAll((open) => this.setChainMin(!open, true));
     state.ev.on('keys', () => this.renderKeys());
     state.ev.on('layers', () => this.renderLayers());
     state.ev.on('universe', () => this.renderCiv());
-    state.ev.on('params', ({ ripple }) => this.ripple(ripple));
+    state.ev.on('params', ({ ripple }) => {
+      this.ripple(ripple);
+      this.scheduleLive();
+    });
+    state.ev.on('universe', () => this.scheduleLive());
     this.renderKeys();
     this.renderLayers();
     this.renderCiv();
+    this.renderFracs();
     this.setAct('hall');
   }
 
+  /** 收起时只显示文明名字与六层状态点。 */
+  setChainMin(min: boolean, user = false): void {
+    this.chainEl.classList.toggle('min', min);
+    this.chainFold.title = min ? '展开文明链条' : '收起文明链条（H 键收起全部）';
+    this.chainFold.setAttribute('aria-expanded', String(!min));
+    if (user) remember('chain', !min);
+  }
+
   setLadder(fractions: number[]): void {
-    fractions.forEach((f, i) => (this.fracEls[i].textContent = fracText(f)));
-    this.fracEls[5].textContent = '由你决定';
+    this.ladder = fractions;
+    this.renderFracs();
+  }
+
+  private toggleChainMode(): void {
+    this.chainMode = this.chainMode === 'live' ? 'ladder' : 'live';
+    this.renderFracs();
+  }
+
+  private scheduleLive(): void {
+    if (this.chainMode !== 'live') return;
+    clearTimeout(this.liveTimer);
+    this.liveTimer = window.setTimeout(() => this.renderFracs(), 120);
+  }
+
+  /** 链条右侧：实时读数（随参量变化）或参数空间存活比例（固定）。 */
+  private renderFracs(): void {
+    if (this.chainMode === 'ladder') {
+      this.modeLbl.textContent = '参数空间比例 ⇄';
+      this.noteEl.textContent = '右侧比例：在本作品设定的参数取值范围内随机抽样，能走过该层的比例。';
+      this.fracEls.forEach((el, i) => {
+        el.className = 'frac';
+        el.title = '';
+        el.textContent = i === 5 ? '由你决定' : this.ladder ? fracText(this.ladder[i]) : '…';
+      });
+      return;
+    }
+    this.modeLbl.textContent = '实时读数 ⇄';
+    this.noteEl.textContent = '右侧为实时读数：在参数台或实验舱中拖动参量，引擎立刻重算。点击标题切换为参数空间比例。';
+    liveLayers(this.state.params, this.state.report).forEach((l, i) => {
+      const el = this.fracEls[i];
+      el.className = `frac live st-${l.status}`;
+      el.textContent = l.short;
+      el.title = `${l.title}：${l.detail}`;
+      // 收起时用状态点的颜色表达实时判定
+      this.layerEls[i].dataset.live = l.status;
+      this.layerEls[i].title = `${LAYER_LABELS[i]} · ${l.title}`;
+    });
   }
 
   setAct(id: ActId): void {
@@ -140,7 +211,7 @@ export class Hud {
 
   setMode(mode: 'guided' | 'free'): void {
     this.modeBtn.textContent = mode === 'guided' ? '自由探索' : '导览';
-    this.modeBtn.title = mode === 'guided' ? '退出导览，自由探索' : '从头播放导览（约 5 分 35 秒）';
+    this.modeBtn.title = mode === 'guided' ? '退出导览，自由探索' : `从头播放导览（${GUIDE_LABEL}）`;
     this.guideEl.hidden = mode !== 'guided';
   }
 

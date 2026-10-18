@@ -1,0 +1,8 @@
+{
+  "name": "genesis-epoch-submission",
+  "private": true,
+  "type": "module",
+  "description": "作品介绍文档排版：HTML + Paged.js 分页 + KaTeX 公式，经 Edge 无头模式输出 PDF",
+  "scripts": { "build": "node build.mjs" },
+  "dependencies": { "katex": "^0.16.22", "pagedjs": "^0.4.3", "playwright-core": "^1.56.0" }
+}

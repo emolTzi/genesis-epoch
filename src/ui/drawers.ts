@@ -4,6 +4,7 @@ import { h, clear } from './dom';
 import { PRESETS, chat, loadConfig, saveConfig, type ProviderConfig } from '../llm/provider';
 import type { State } from '../app/state';
 import type { Quality } from '../render/Stage';
+import { GUIDE_LABEL } from '../data/script';
 
 export class Graveyard {
   readonly el: HTMLElement;
@@ -129,7 +130,7 @@ export class Boot {
 
   constructor(onStart: (mode: 'guided' | 'free') => void) {
     this.loading = h('div', { class: 'loading' }, '正在校准实验室……');
-    const guided = h('button', { type: 'button', class: 'btn primary', disabled: true, onclick: () => onStart('guided') }, '导览模式 · 约 5 分 35 秒') as HTMLButtonElement;
+    const guided = h('button', { type: 'button', class: 'btn primary', disabled: true, onclick: () => onStart('guided') }, `导览模式 · ${GUIDE_LABEL}`) as HTMLButtonElement;
     const free = h('button', { type: 'button', class: 'btn', disabled: true, onclick: () => onStart('free') }, '自由探索') as HTMLButtonElement;
     this.buttons = [guided, free];
     this.el = h('div', { class: 'boot' },

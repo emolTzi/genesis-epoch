@@ -4,7 +4,6 @@ import * as THREE from 'three';
 import { Stage, setGroupOpacity } from '../render/Stage';
 import { Sky } from '../render/Sky';
 import { Planet } from '../render/Planet';
-import { Armillary } from '../render/Armillary';
 import { Hall } from '../render/Hall';
 import { CameraRig } from '../render/CameraRig';
 import { Tweens, ease } from '../core/tween';
@@ -15,13 +14,16 @@ import { Panel } from '../ui/panel';
 import { ObserverPanel } from '../ui/observerPanel';
 import { Archive } from '../ui/archive';
 import { Graveyard, Settings } from '../ui/drawers';
+import { ParamConsole } from '../ui/console';
+import { installGlossary } from '../ui/glossaryLinker';
 import { AudioEngine } from '../audio/AudioEngine';
 import { Observer } from '../llm/observer';
 import { EPIPHANIES } from '../data/epiphanies';
 import { HAZARD_CAPS } from '../sim/kpg';
-import type { Line } from '../data/script';
+import { GUIDE_SECONDS, type Line } from '../data/script';
 import type { KeyId, ParamValue } from '../sim/types';
 import { KEY_NAMES } from '../sim/types';
+import { foldAll } from '../ui/fold';
 
 export class GuideAbort extends Error {}
 
@@ -37,7 +39,6 @@ export class App {
   readonly state = new State();
   readonly sky: Sky;
   readonly planet: Planet;
-  readonly armillary = new Armillary();
   readonly hall = new Hall();
   readonly rig: CameraRig;
   readonly audio = new AudioEngine();
@@ -51,6 +52,7 @@ export class App {
   readonly archive: Archive;
   readonly graveyard: Graveyard;
   readonly settings: Settings;
+  readonly console: ParamConsole;
   readonly reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   /** 每帧回调（各幕注册）。 */
   private updaters = new Set<(dt: number, t: number) => void>();
@@ -63,11 +65,10 @@ export class App {
   readonly hallRoot = new THREE.Group();
   /** 行星的承载组：各幕可移动它而不影响行星自身的自转。 */
   readonly planetRoot = new THREE.Group();
-  /** 大厅（浑天仪 + 地台 + 墓园）的整体淡入淡出。 */
+  /** 大厅（地台 + 墓园）的整体淡入淡出。 */
   readonly hallFade: Fadeable = {
     group: this.hallRoot,
     setOpacity: (a: number) => {
-      this.armillary.setOpacity(a);
       this.hall.setOpacity(a);
       this.hallRoot.visible = a > 0.002;
     },
@@ -88,7 +89,7 @@ export class App {
     this.planet = new Planet(3, this.stage.quality === 'low' ? 96 : 160);
     this.planet.setCaps(HAZARD_CAPS);
     this.planetRoot.add(this.planet.group);
-    this.hallRoot.add(this.armillary.group, this.hall.group);
+    this.hallRoot.add(this.hall.group);
     this.stage.scene.add(this.hallRoot, this.planetRoot);
     this.rig = new CameraRig(this.stage.camera, canvas);
     this.stage.onQualityChange = (q) => {
@@ -103,9 +104,11 @@ export class App {
       onAct: handlers.onAct,
       onMode: handlers.onMode,
       onObserver: () => this.toggleDrawer('observer'),
+      onConsole: () => this.toggleDrawer('console'),
       onArchive: () => this.toggleDrawer('archive'),
       onGraves: () => this.toggleDrawer('graves'),
       onSettings: () => this.toggleDrawer('settings'),
+      onFold: () => this.toggleCompact(),
       onSound: () => {
         this.audio.setEnabled(!this.audio.enabled);
         this.hud.setSound(this.audio.enabled);
@@ -122,26 +125,31 @@ export class App {
     );
     this.archive = new Archive(this.state, () => this.toggleDrawer('archive', false));
     this.graveyard = new Graveyard(this.state, () => this.toggleDrawer('graves', false));
+    this.console = new ParamConsole(this.state, () => this.toggleDrawer('console', false), () => this.onParamsApplied?.());
     this.settings = new Settings(() => this.toggleDrawer('settings', false), {
       onQuality: (q) => this.stage.setQualityMode(q),
       onTts: (on) => (this.audio.tts = on),
     });
     ui.append(
       this.hud.el, this.hud.chainEl, this.hud.scaleEl, this.panel.el, this.subtitle.el, this.hud.guideEl,
-      this.observerPanel.el, this.archive.el, this.graveyard.el, this.settings.el, this.modals.el, this.toasts.el,
+      this.observerPanel.el, this.console.el, this.archive.el, this.graveyard.el, this.settings.el, this.modals.el, this.toasts.el,
     );
 
-    this.state.ev.on('keys', (keys) => this.armillary.setKeys(keys));
     this.state.ev.on('unlock', (k) => {
-      this.armillary.pulse(k);
       this.audio.unlock();
       this.toasts.show(`${KEY_NAMES[k]}已解锁`, 'key');
     });
     this.state.ev.on('graves', (g) => this.hall.setGraveyard(g));
-    this.armillary.setKeys(this.state.keys, true);
     this.hall.setGraveyard(this.state.graves);
     this.hall.setMessageStars(this.state.stars.length);
-    if (document.fonts) void document.fonts.ready.then(() => this.armillary.refreshLabels());
+
+    // 专业名词：双击跳转到观测档案中的注释（导览中自动暂停）
+    installGlossary(ui, (id) => {
+      if (this.state.mode === 'guided' && !this.guidePaused) this.toggleGuidePause(true);
+      for (const d of [this.observerPanel, this.console, this.graveyard, this.settings]) d.setOpen(false);
+      this.archive.openGlossary(id);
+      this.audio.click();
+    });
 
     window.addEventListener('keydown', (e) => this.onKey(e));
     new MutationObserver(() => this.updateViewOffset()).observe(this.panel.el, { attributes: true, attributeFilter: ['hidden'] });
@@ -164,13 +172,12 @@ export class App {
       this.tw.update(dt);
       this.rig.update(dt, this.reduced);
       this.sky.update(t, this.stage.camera);
-      this.planet.update(dt, t);
-      this.armillary.update(dt, this.reduced);
+      this.planet.update(dt, t, this.stage.camera);
       this.hall.update(dt, t, this.reduced);
       for (const u of this.updaters) u(dt, t);
       if (this.state.mode === 'guided' && !this.guidePaused) {
         this.guideElapsed += dt * this.tw.rate;
-        this.hud.setGuideProgress(this.guideElapsed, 335, this.guidePaused);
+        this.hud.setGuideProgress(this.guideElapsed, GUIDE_SECONDS, this.guidePaused);
       }
     });
   }
@@ -220,7 +227,7 @@ export class App {
   toggleGuidePause(force?: boolean): void {
     this.guidePaused = force ?? !this.guidePaused;
     this.tw.rate = this.guidePaused ? 0 : this.guideRate;
-    this.hud.setGuideProgress(this.guideElapsed, 335, this.guidePaused);
+    this.hud.setGuideProgress(this.guideElapsed, GUIDE_SECONDS, this.guidePaused);
     if (this.guidePaused) this.audio.stopSpeech();
   }
 
@@ -234,7 +241,6 @@ export class App {
     await this.modals.epiphany(e, this.state.depth, held);
     this.modals.auto = null;
     if (held) {
-      this.armillary.pulse(key);
       this.audio.unlock();
     } else this.state.unlock(key);
   }
@@ -252,8 +258,8 @@ export class App {
 
   /* ───────── 抽屉 ───────── */
 
-  toggleDrawer(which: 'observer' | 'archive' | 'graves' | 'settings', open?: boolean): void {
-    const map = { observer: this.observerPanel, archive: this.archive, graves: this.graveyard, settings: this.settings };
+  toggleDrawer(which: 'observer' | 'console' | 'archive' | 'graves' | 'settings', open?: boolean): void {
+    const map = { observer: this.observerPanel, console: this.console, archive: this.archive, graves: this.graveyard, settings: this.settings };
     for (const [k, v] of Object.entries(map)) {
       const isTarget = k === which;
       const willOpen = isTarget ? open ?? Boolean(v.el.hidden) : false;
@@ -276,12 +282,23 @@ export class App {
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
     if (e.key === 'Escape') {
       this.toggleDrawer('observer', false);
+      this.toggleDrawer('console', false);
       this.toggleDrawer('archive', false);
     } else if (e.key === ' ' && this.state.mode === 'guided') {
       e.preventDefault();
       this.toggleGuidePause();
     } else if (e.key.toLowerCase() === 'q') this.toggleDrawer('observer');
     else if (e.key.toLowerCase() === 'a') this.toggleDrawer('archive');
+    else if (e.key.toLowerCase() === 'p') this.toggleDrawer('console');
+    else if (e.key.toLowerCase() === 'h') this.toggleCompact();
+  }
+
+  private compact = false;
+
+  /** 一键收起 / 展开全部浮层面板，让画面本身成为主角。 */
+  toggleCompact(): void {
+    this.compact = !this.compact;
+    foldAll(!this.compact);
   }
 
   /* ───────── 场景过渡 ───────── */
