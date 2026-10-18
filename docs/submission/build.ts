@@ -86,10 +86,17 @@ html = html.replace(/<h1([^>]*)>|<fig\b[^>]*>|<gpt\b[^>]*>/g, (tag) => {
     const gid = attr(tag, 'id')!;
     const dir = join(ROOT, 'docs', 'assets', 'gpt');
     const file = existsSync(dir) ? readdirSync(dir).find((f) => f.startsWith(`${gid}.`) && /\.(png|jpe?g|webp)$/i.test(f)) : undefined;
-    const img = file
-      ? `<img src="${relative(OUT, join(dir, file)).replace(/\\/g, '/')}" alt="${esc(cap)}">`
-      : `<div class="placeholder"><b>素材待下载</b><span>ChatGPT 生成 · ${esc(gid)}</span></div>`;
-    return `<figure class="${cls} ai" id="${id}">${img}<span class="ai-badge">AI 生成</span><figcaption><b>${label}</b>${cap}<span class="ai-note">图像由 ChatGPT 网页版根据团队撰写的提示词生成，仅作视觉概念与文创设计示意。</span></figcaption></figure>`;
+    if (!file) {
+      // 团队只下载到部分 AI 概念图：缺图的直接略去，不留占位框与图注。
+      figN--;
+      figIndex.pop();
+      return '';
+    }
+    figN++;
+    const label2 = `图 ${chapter}-${figN}`;
+    const id2 = `fig-${chapter}-${figN}`;
+    figIndex.push({ id: id2, label: label2, cap });
+    return `<figure class="${cls} ai" id="${id2}"><img src="${relative(OUT, join(dir, file)).replace(/\\/g, '/')}" alt="${esc(cap)}"><span class="ai-badge">AI 生成</span><figcaption><b>${label2}</b>${cap}<span class="ai-note">图像由 ChatGPT 网页版根据团队撰写的提示词生成，仅作视觉概念与文创设计示意。</span></figcaption></figure>`;
   }
   const src = attr(tag, 'src')!;
   if (!existsSync(join(HERE, src))) throw new Error(`缺少图片 ${src}`);
