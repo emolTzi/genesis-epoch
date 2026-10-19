@@ -1,10 +1,10 @@
 # ChatGPT 生成素材
 
-用途：作品介绍文档（`docs/submission`）的封面、章节扉页、章节概念图，以及附录 C 的文创产品效果图。**作品运行画面不使用这些图像。**
+用途：作品介绍文档（`docs/submission`）的封面主视觉。**作品运行画面不使用这些图像。**
 
-- 生成方式：ChatGPT 网页版图像生成（2026-10-10），在同一个对话“生成封面主视觉”中按顺序生成 16 张，以保证画风统一。
-- 提示词：每张的画面描述见 `prompts.json` 的 `items`；第 1 张附带完整的统一画风说明（`style`），后续各张注明“保持与第 1 张完全一致的统一画风”；文创产品图附带 `productStyle`。
-- 文件命名：下载后按顺序命名为 `<编号>.png`，例如 `01_cover.png`、`02_hall.png` …… `16_exhibit.png`。排版程序 `docs/submission/build.ts` 按编号自动取用，缺失的图显示为“素材待下载”占位框。
+- 生成方式：ChatGPT 网页版图像生成（2026-10-10），封面 1 张。
+- 提示词：见 `prompts.json` 的 `items`；第 1 张附带完整的统一画风说明（`style`）。
+- 文件命名：`01_cover.png`。排版程序 `docs/submission/build.ts` 按编号自动取用，缺失的图自动略去。
 - 标识：文档中每张图的右上角与图注都标注“AI 生成”。
 
-`scripts/gen-assets.mjs` 是用 opencli 驱动浏览器批量生成的脚本；本次因 opencli 控制的浏览器页面无法加载而改为在内置浏览器中手动生成，脚本保留备用。
+`scripts/gen-assets.mjs` 为批量生成脚本。
