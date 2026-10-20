@@ -162,26 +162,26 @@ export class LifeAct extends Act {
     const from = planet.spin.rotation.y;
     let delta = (((want - from) % (Math.PI * 2)) + Math.PI * 3) % (Math.PI * 2) - Math.PI;
     if (Math.abs(delta) < 0.02) delta = 0;
-    await app.tw.run(1200, (k) => (planet.spin.rotation.y = from + delta * k), ease.inOutCubic);
+    await app.tw.run(700, (k) => (planet.spin.rotation.y = from + delta * k), ease.inOutCubic);
     const world = new THREE.Vector3(...dir).multiplyScalar(1.0);
     planet.surface.localToWorld(world);
     const center = new THREE.Vector3();
     planet.surface.getWorldPosition(center);
     const ll = latLon(dir);
     this.resultEl.replaceChildren(h('p', { class: 'hint' }, `撞击点：纬度 ${ll.lat.toFixed(0)}°，经度 ${ll.lon.toFixed(0)}°……`));
-    await this.impactor!.strike(app.tw, world, center, 2200);
+    await this.impactor!.strike(app.tw, world, center, 1300);
     app.audio.impact();
     const hazard = isHazard(dir);
     planet.setImpact(dir, 1);
-    void app.tw.run(1800, (k) => planet.setImpact(dir, 1 - k), ease.outCubic);
+    void app.tw.run(900, (k) => planet.setImpact(dir, 1 - k), ease.outCubic);
     if (hazard) {
       planet.setLook({ dead: 0.7, scar: 1, cloud: 0.9 });
-      await app.wait(1600);
+      await app.wait(700);
       planet.setLook({ dead: 0, cloud: 0.5 });
       planet.setLook({ scar: 0.4 });
     } else {
       planet.setLook({ scar: 0.6 });
-      await app.wait(900);
+      await app.wait(500);
     }
     planet.spinRate = spin;
     this.striking = false;

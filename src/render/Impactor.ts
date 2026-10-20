@@ -134,7 +134,7 @@ export class Impactor {
     (this.dust.material as THREE.SpriteMaterial).opacity = 0;
     const pos = this.debris.geometry.getAttribute('position') as THREE.BufferAttribute;
     const base = Float32Array.from(this.debrisBase);
-    await tw.run(2800, (k) => {
+    await tw.run(1200, (k) => {
       const flashK = Math.min(1, k / 0.16);
       (this.flash.material as THREE.SpriteMaterial).opacity = flashK < 1 ? flashK : Math.max(0, 1 - (k - 0.16) / 0.7);
       const s = 0.22 + Math.min(1, k / 0.12) * 1.02;

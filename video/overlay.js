@@ -1643,23 +1643,390 @@
     await wait(0.8);
   }
 
+  async function fastClick(elem, action, dur = 0.32) {
+    if (elem) {
+      const r = elem.getBoundingClientRect();
+      await moveTo(r.left + r.width / 2, r.top + r.height / 2, dur);
+    }
+    ripple(cur.x, cur.y);
+    sfx('click');
+    await wait(0.05);
+    if (action) action();
+    else if (elem) elem.click();
+    await wait(0.1);
+  }
+
+  async function fastIntro3() {
+    document.body.classList.add('film-own');
+    clean(true);
+    setBg(1);
+    stars.op = 0;
+    app.stage.qualityMode = 'high';
+    app.stage.setQualityMode('high');
+    app.audio.setEnabled(false);
+    void tween(0.9, (k) => (stars.op = k));
+    const l1 = chars('在已知的宇宙里', 'f-serif');
+    const l2 = chars('我们只确认过一次文明', 'f-serif f-gold');
+    await scene((box) => {
+      box.append(
+        el('div', { class: 'f-center', style: 'top:418px;font-size:40px;letter-spacing:.18em;color:#a9aeca' }, l1.el),
+        el('div', { class: 'f-center', style: 'top:486px;font-size:62px;letter-spacing:.12em' }, l2.el),
+      );
+      say('已知宇宙里，我们只确认过一次文明。', 3.4);
+      return (lt) => {
+        animChars(l1.list, lt, { delay: 0.15, stagger: 0.06, dur: 0.5, dy: 16, blur: 10 });
+        animChars(l2.list, lt, { delay: 0.8, stagger: 0.055, dur: 0.55, dy: 16, blur: 10, sc: 1.08 });
+        box.style.opacity = (1 - P(lt, 3.35, 0.45, E.in3)).toFixed(3);
+      };
+    }, 3.9);
+
+    const pt = particleText(CFG.title, '900 196px FilmSerif', VW / 2, 380, { step: 5 });
+    const tt = chars(CFG.title, 'f-serif');
+    sfx('hit');
+    await scene((box) => {
+      const title = el('div', { class: 'f-center f-serif', style: 'top:246px;font-size:196px;letter-spacing:.12em;text-shadow:0 0 46px rgba(245,198,107,.42)' }, tt.el);
+      const sub = el('div', { class: 'f-center', style: 'top:505px;font-size:33px;letter-spacing:.40em;color:#f5c66b' }, CFG.subtitle);
+      const line = el('div', { class: 'f-center f-p', style: 'top:584px;font-size:19px;color:#a9aeca' }, '六层因果链 · 实时参数推演 · 一万次平行宇宙');
+      const contest = el('div', { class: 'f-center', style: 'top:632px' }, el('span', { class: 'f-pill' }, CFG.contest));
+      box.append(title, sub, line, contest);
+      return (lt) => {
+        pt.form = clamp(lt / 1.35);
+        pt.op = 1 - P(lt, 4.0, 0.5);
+        tt.list.forEach((c, i) => {
+          const p = P(lt, 0.85 + i * 0.085, 0.7);
+          c.style.opacity = p.toFixed(3);
+          c.style.filter = p < 1 ? `blur(${((1 - p) * 12).toFixed(1)}px)` : 'none';
+        });
+        sub.style.opacity = P(lt, 1.55, 0.55).toFixed(3);
+        line.style.opacity = P(lt, 2.0, 0.55).toFixed(3);
+        contest.style.opacity = P(lt, 2.35, 0.55).toFixed(3);
+        box.style.opacity = (1 - P(lt, 4.35, 0.45, E.in3)).toFixed(3);
+      };
+    }, 4.85);
+    pt.p.dead = true;
+
+    const starFade = tween(0.8, (k) => (stars.op = 1 - k));
+    await fadeBg(0, 0.9);
+    await starFade;
+    await wait(0.2);
+    await showCursor(true);
+    await until(() => { const b = byText('.boot .choices button', '自由探索'); return !!b && !b.disabled; }, 6);
+    await fastClick(byText('.boot .choices button', '自由探索'), null, 0.24);
+    await until(() => app.state.mode === 'free' && !!q('.modal .ranks'), 6);
+    await wait(0.15);
+    const rank = $$('.modal .ranks button')[4];
+    if (rank) await fastClick(rank, null, 0.16);
+    const ok = byText('.modal button', '校准完成');
+    if (ok) await fastClick(ok, null, 0.2);
+    await until(() => { const m = q('.modal-wrap'); return !m || m.hidden; }, 5);
+    const bootEl = q('.boot');
+    if (bootEl) bootEl.remove();
+    await showCursor(false);
+    clean(false);
+    await app.rig.to(app.tw, { target: V3(), dist: 8.8, el: 0.16, az: 0.5 }, 0.9);
+    await wait(0.25);
+  }
+
+  async function fastHall3() {
+    clean(false);
+    await sayWait('每次拖动，六层宇宙都会实时重算。', 3.8);
+    const slider = q('#p-orbit_a', app.panel.el);
+    if (slider) {
+      await showCursor(true);
+      await drag(slider, 2.4, 0.9);
+      await wait(0.25);
+      say('2.4 AU，行星冰封，L1 断链。', 3.6);
+      const row = document.querySelectorAll('.chain .layers li')[1];
+      if (row) highlight(row, '2.4 AU · 164 K · L1 冰封', 1.8, 'left');
+      await wait(3.0);
+      const reset = byText('button', '恢复我们的宇宙', app.panel.el);
+      if (reset) await fastClick(reset, null, 0.2);
+      await wait(0.35);
+      await showCursor(false);
+    }
+    clean(true);
+    await app.rig.to(app.tw, { target: V3(), dist: 7.4, el: 0.11, az: 0.98 }, 0.8);
+    await sayWait('六层因果链。理解一层，才能改变一层。', 3.9);
+  }
+
+  async function fastOrigin3() {
+    clean(true);
+    const go = dir.goTo('origin');
+    say('L0：生命为何存在？答案在极窄的常数窗口。', 4.4);
+    await wait(3.4);
+    await go;
+    await wait(0.35);
+    app.toggleDrawer('console', true);
+    await wait(0.22);
+    const inp = q('#p-alphas_dev', app.console.el);
+    const cbody = q('.cbody', app.console.el);
+    if (inp && cbody) {
+      const cr = cbody.getBoundingClientRect();
+      const ir = (inp.closest('.csec') || inp).getBoundingClientRect();
+      cbody.scrollTop = Math.max(0, cbody.scrollTop + ir.top - cr.top - 38);
+      await wait(0.18);
+      await showCursor(true);
+      await drag(inp, 0.8, 0.9);
+      await wait(0.18);
+      say('强核力偏移 0.8%，碳氧几乎消失。', 4.0);
+      const verdict = q('.console .cverdict', app.console.el);
+      if (verdict) highlight(verdict, 'L0 断裂 · 碳氧几乎消失', 1.8, 'left');
+      await wait(3.2);
+      const reset = byText('button', '恢复为我们的宇宙', app.console.el);
+      if (reset) await fastClick(reset, null, 0.18);
+      await wait(0.3);
+      const x = q('.console .x', app.console.el);
+      if (x) await fastClick(x, () => app.toggleDrawer('console', false), 0.18);
+      await showCursor(false);
+    }
+    clean(true);
+    await app.rig.to(app.tw, { target: V3(), dist: 13.5, el: 0.31, az: 0.2 }, 0.8);
+    await sayWait('窗口极窄，我们恰在其中。', 3.2);
+  }
+
+  async function fastStars3() {
+    const go = dir.goTo('stars');
+    say('从宇宙网，进入银河系的一条旋臂。', 3.6);
+    await wait(3.5);
+    say('普通恒星的宜居带里，液态水成为可能。', 3.8);
+    await go;
+    await wait(0.2);
+    clean(false);
+    await app.rig.to(app.tw, { target: V3(), dist: 10.4, el: 0.54, az: 1.0 }, 0.7);
+    const slider = q('#p-orbit_a', app.panel.el);
+    if (slider) {
+      await showCursor(true);
+      await drag(slider, 2.4, 0.8);
+      await wait(0.18);
+      say('164 K，行星冰封。', 3.0);
+      await wait(2.4);
+      await drag(slider, 1.0, 0.65);
+      await wait(0.2);
+      await showCursor(false);
+    }
+    clean(true);
+    await app.rig.to(app.tw, { target: V3(), dist: 11, el: 0.52, az: 1.1 }, 0.75);
+    await sayWait('回到 1 AU，液态水重新出现。', 3.3);
+  }
+
+  async function fastElements3() {
+    const go = dir.goTo('elements');
+    say('碳—硅酸盐循环，是地球的恒温器。', 3.6);
+    await wait(2.6);
+    await go;
+    await wait(0.2);
+    clean(true);
+    await app.rig.to(app.tw, { target: V3(), dist: 3.05, el: 0.14, az: 1.0 }, 0.7);
+    clean(false);
+    const slider = q('#p-weathering', app.panel.el);
+    if (slider) {
+      await showCursor(true);
+      await drag(slider, 0, 0.9);
+      await wait(0.2);
+      say('风化停止，二氧化碳累积，升温失速。', 4.2);
+      const row = document.querySelectorAll('.chain .layers li')[2];
+      if (row) highlight(row, 'L2 · 温室失控', 1.8, 'left');
+      await wait(3.0);
+      await drag(slider, 1, 0.65);
+      await wait(0.2);
+      await showCursor(false);
+    }
+    app.panel.el.scrollTop = 0;
+    clean(true);
+    await app.rig.to(app.tw, { target: V3(), dist: 3.25, el: 0.13, az: 1.18 }, 0.7);
+    await sayWait('负反馈恢复，温度重新回落。', 3.2);
+  }
+
+  async function fastLife3() {
+    const go = dir.goTo('life');
+    await sayWait('L3：6600 万年前，小行星撞向地球。', 4.0);
+    await go;
+    await wait(0.2);
+    clean(true);
+    await app.rig.to(app.tw, { target: V3(), dist: 3.35, el: 0.16, az: 0.78 }, 0.7);
+    await sayWait('撞击落在 13% 的富碳区，烟尘遮天。', 4.2);
+    clean(false);
+    await wait(0.25);
+    const btn = byText('button', '落在真实的历史位置', app.panel.el);
+    if (btn) {
+      await showCursor(true);
+      await fastClick(btn, null, 0.25);
+      await showCursor(false);
+      clean(true);
+      await wait(4.5);
+    } else {
+      await dir.acts.life.strike([-0.226, -0.345, -0.911], true).catch(() => {});
+      await wait(2.0);
+    }
+    card({
+      kick: 'L3 · K-Pg 大灭绝', title: '一次撞击，重置生态位', accent: '#f5c66b',
+      lines: ['非鸟恐龙退场', '哺乳动物获得辐射演化空间', '人类登场的条件被打开'],
+      src: 'Kaiho & Oshima 2017, Sci. Rep. 7:14855', hold: 3.2,
+    });
+    await sayWait('恐龙退场，哺乳动物辐射，人类登场。', 3.8);
+  }
+
+  async function fastCiv3() {
+    app.state.setParams({ coop: 0.92, eco: 0.88, openness: 0.72, reform: 0.78 });
+    const go = dir.goTo('civ');
+    say('云层之下，是一张会自己写历史的大陆。', 3.8);
+    await go;
+    await wait(0.25);
+    const c = dir.acts.civ;
+    c.setPlaying(false);
+    clean(true);
+    c.newRun({ coop: 0.12, eco: 0.35, openness: 0.45, reform: 0.42 }, false);
+    await advanceSandbox(c, 900);
+    app.state.setLayer(4, 'fail');
+    card({ kick: '分支 A · 未修正历史', title: c.sb.fate || '文明中断', accent: '#ff6152',
+      lines: [`沙盘第 ${Math.round(c.sb.year)} 年`, '冲突与生态张力越过阈值'], hold: 2.8 });
+    await sayWait('合作缺席，文明在冲突中中断。', 3.6);
+    if (cardNow && !cardNow.exitAt) cardNow.exitAt = T;
+    app.state.setParams({ coop: 0.92, eco: 0.88, openness: 0.72, reform: 0.78 });
+    c.userRun = false;
+    c.rewind(0);
+    c.setSpeed(20);
+    c.setPlaying(true);
+    await app.rig.to(app.tw, { target: V3(), dist: 8.4, el: 0.9, az: 0.28 }, 0.55);
+    say('回卷到文明起点：提高合作，约束生态张力。', 4.2);
+    await wait(3.9);
+    await until(() => !!c.sb?.done, 8);
+    c.setPlaying(false);
+    c.table.sync(true);
+    c.refreshUi(true);
+    c.refresh();
+    const ok = c.sb.fate === '延续';
+    app.state.setLayer(4, ok ? 'ok' : 'fail');
+    clean(false);
+    await wait(0.3);
+    if (ok) {
+      say('文明延续。每一处灯火，都是一座城市。', 4.2);
+      await wait(3.0);
+    } else {
+      say('这一次，文明仍在风险边缘摇摆。', 3.5);
+      await wait(2.6);
+    }
+    const cities = c.sb.settlements.filter((s) => s.pop > 0 && !s.ruined).sort((a, b) => b.pop - a.pop);
+    const big = cities[1] || cities[0];
+    if (big) {
+      const world = c.table.settlementPos(big.id).applyMatrix4(c.table.group.matrixWorld);
+      const sp = project(world);
+      await showCursor(true);
+      await moveTo(sp.x, sp.y, 0.35);
+      ripple(cur.x, cur.y, '#3ff2e6');
+      sfx('click');
+      c.click(big.y * 72 + big.x, big);
+      await app.rig.to(app.tw, { target: world, dist: 1.45, el: 0.58, az: 0.55 }, 0.9);
+      await wait(1.2);
+      await showCursor(false);
+      clean(true);
+      await wait(0.4);
+    }
+    clean(false);
+    await app.rig.to(app.tw, { target: V3(), dist: 8.5, el: 0.92, az: 0.28 }, 0.7);
+    const head = [...app.panel.el.querySelectorAll('.sec-head')].find((b) => b.textContent.includes('双环'));
+    if (head && head.closest('.sec')?.classList.contains('shut')) await fastClick(head, null, 0.2);
+    const chart = q('canvas.chart', app.panel.el);
+    if (chart) {
+      await scrollPanelToEl(chart, 0.35);
+      highlight(chart.closest('.sec') || chart, '灰色虚线：旧分支', 2.2, 'left');
+    }
+    await sayWait('历史可以回卷，旧分支保留，新历史生长。', 4.2);
+    clean(true);
+  }
+
+  async function fastFinale3() {
+    const f = dir.acts.finale;
+    f.cinematicFree = async () => {};
+    const go = dir.goTo('finale');
+    say('把实验放大一万倍：还有多少文明？', 3.6);
+    await wait(3.0);
+    await go;
+    clean(true);
+    await app.rig.to(app.tw, { target: V3(), dist: 22, el: 0.28, az: 0.7 }, 0.65);
+    await sayWait('一万个宇宙，每个光点都是一次抽样。', 4.0);
+    const ext = f.extinguish(1900);
+    say('本模型下，约 52% 的银河系没有第二个文明。', 4.8);
+    await ext;
+    await wait(3.1);
+    await f.revealEarth(1700);
+    f.buildFuturePanel();
+    clean(false);
+    await wait(0.3);
+    say('这不是模拟。这是此刻的地球。', 3.4);
+    await wait(2.5);
+    const coop = q('#p-fut_coop', app.panel.el);
+    if (coop) {
+      await showCursor(true);
+      await drag(coop, 0.9, 0.7);
+      await wait(0.2);
+      say('未来的参数，由我们选择。', 3.2);
+      await wait(2.5);
+      await showCursor(false);
+    }
+    app.panel.el.scrollTop = 0;
+    clean(true);
+    await app.rig.to(app.tw, { target: V3(), dist: 3.35, el: 0.12, az: 1.2 }, 0.7);
+    await sayWait('知识读懂过去，未来握在手里。', 3.5);
+  }
+
+  async function fastClose3() {
+    clean(true);
+    setBg(0.95);
+    sfx('mood', { mood: 'outro' });
+    stars.op = 0.55;
+    const a = chars('文明诞生，是一场低概率的奇迹。', 'f-serif');
+    const b = chars('未来的钥匙，握在每一个人手里。', 'f-serif f-gold');
+    await scene((box) => {
+      box.append(
+        el('div', { class: 'f-center', style: 'top:405px;font-size:58px;letter-spacing:.07em;text-shadow:0 4px 20px #000' }, a.el),
+        el('div', { class: 'f-center', style: 'top:493px;font-size:58px;letter-spacing:.05em;color:#f5c66b;text-shadow:0 4px 20px #000' }, b.el),
+      );
+      say('文明诞生是奇迹，未来握在我们手里。', 3.6);
+      return (lt) => {
+        animChars(a.list, lt, { delay: 0.1, stagger: 0.045, dur: 0.55, dy: 12, blur: 8 });
+        animChars(b.list, lt, { delay: 1.25, stagger: 0.045, dur: 0.55, dy: 12, blur: 8 });
+        box.style.opacity = (1 - P(lt, 3.8, 0.45, E.in3)).toFixed(3);
+      };
+    }, 4.3);
+    const tt = chars(CFG.title, 'f-serif');
+    const pt = particleText(CFG.title, '900 132px FilmSerif', VW / 2, 370, { step: 6 });
+    await scene((box) => {
+      const logo = el('div', { class: 'f-center f-serif', style: 'top:300px;font-size:132px;letter-spacing:.16em;text-shadow:0 0 34px rgba(245,198,107,.42)' }, tt.el);
+      const sub = el('div', { class: 'f-center f-serif f-gold', style: 'top:470px;font-size:27px;letter-spacing:.34em' }, CFG.subtitle);
+      const team = el('div', { class: 'f-center f-p', style: 'top:545px;font-size:18px;color:#c9cde3' }, CFG.team || '创世纪元项目组');
+      const note = el('div', { class: 'f-center', style: 'top:610px;font-size:14px;color:#8d93b3;letter-spacing:.04em' }, '画面均为作品实际运行录制 · 地球影像来自 NASA 公有领域 · AI 辅助剪辑、配乐与解说');
+      box.append(logo, sub, team, note);
+      return (lt) => {
+        pt.form = clamp(lt / 1.1);
+        pt.op = 1 - P(lt, 3.7, 0.45);
+        tt.list.forEach((c, i) => {
+          const p = P(lt, 1.0 + i * 0.08, 0.7);
+          c.style.opacity = p.toFixed(3);
+          c.style.filter = p < 1 ? `blur(${((1 - p) * 10).toFixed(1)}px)` : 'none';
+        });
+        sub.style.opacity = P(lt, 1.9, 0.55).toFixed(3);
+        team.style.opacity = P(lt, 2.25, 0.55).toFixed(3);
+        note.style.opacity = P(lt, 2.55, 0.55).toFixed(3);
+        box.style.opacity = (1 - P(lt, 4.55, 0.45, E.in3)).toFixed(3);
+      };
+    }, 5.1);
+    pt.p.dead = true;
+    capOn = null;
+  }
+
   async function main() {
     await wait(0.05);
-    await openingFilm();
-    await hallStory();
-    await originStory();
-    await starsStory();
-    await elementsStory();
-    await lifeStory();
-    await civStory();
-    await finaleStory();
-    document.body.classList.remove('film-sb');
-    capOn = null;
-    void fadeBg(0.95, 1.0);
-    void tween(0.9, (k) => (stars.op = k));
-    await wait(0.8);
-    await closing();
-    await wait(0.8);
+    await fastIntro3();
+    await fastHall3();
+    await fastOrigin3();
+    await fastStars3();
+    await fastElements3();
+    await fastLife3();
+    await fastCiv3();
+    await fastFinale3();
+    await fastClose3();
+    await wait(0.2);
     done = true;
   }
 

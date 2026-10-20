@@ -18,7 +18,7 @@ import gtts
 
 SR = 44100
 # 全片统一语速（可由 GOOGLE_TTS_SPEAKING_RATE 覆盖）；不逐句调整，保证听感一致。
-RATE = 1.08
+RATE = 1.2
 CACHE = Path(__file__).resolve().parent / 'out' / 'tts-cache'
 
 LINE_REPLACEMENTS = {
@@ -114,6 +114,7 @@ def main():
         start = max(0.0, float(c.get('start', 0)))
         end = max(start + 0.8, float(c.get('end', start + 5)))
         hold = end - start
+        was_fitted = fitted
 
         if engine == 'google':
             # 全片统一语速：一句只合成一次，不再按窗口临时加速，避免忽快忽慢。
@@ -121,7 +122,7 @@ def main():
             dur = len(x) / SR
         else:
             best = None
-            for rate in (2, 3, 4):
+            for rate in (2, 3):
                 x = sapi_line(voice, text, rate, tmp / f'{i:03d}_{rate}.wav')
                 if best is None or len(x) < len(best):
                     best = x
@@ -170,6 +171,7 @@ def main():
             if i0 + take + d2 < n:
                 track[i0 + d2:i0 + take + d2] += x[:take] * 0.032
         made += 1
+        print(f'voice {i:02d} dur={dur:4.2f}s hold={hold:4.2f}s' + (' [fit]' if fitted > was_fitted else ''))
 
     peak = float(np.max(np.abs(track)) + 1e-9)
     if peak > 0.92:

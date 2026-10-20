@@ -14,7 +14,7 @@ node video/render.mjs
 
 建议提交文件：
 
-- `video/out/创世纪元-演示视频.mp4`（1920×1080，30 fps，约 5:52，H.264/AAC）
+- `video/out/创世纪元-演示视频.mp4`（1920×1080，30 fps，约 2:27，H.264/AAC）
 - `video/out/captions.srt`（字幕与解说时间码）
 - `docs/submission/out/创世纪元-演示视频.mp4`（与提交版一致）
 
@@ -23,7 +23,7 @@ node video/render.mjs
 - 团队信息：编辑 `config.json` 的 `team`、`school`、`members` 与 `title`。
 - 节奏和旁白：编辑 `overlay.js` 中的 `coldOpen`、各幕 `*Story` 函数和 `say/sayWait`。
 - 配乐：`score.py` 根据 `film.json` 中的章节、点击、解锁与撞击事件离线生成。
-- 中文解说：`voice.py` 调用 Windows 中文语音，按字幕窗口自动选择语速；`mix_audio.py` 混音。
+- 中文解说：`voice.py` 默认调用 Google Cloud TTS（Chirp3-HD），失败时可回退 Windows SAPI；`mix_audio.py` 混音。
 - 修改作品源码后，必须先运行 `npm run build`。
 
 ## 预览
@@ -32,8 +32,8 @@ node video/render.mjs
 node video/render.mjs --preview --from 0 --to 120 --every 30
 ```
 
-预览帧写入 `out/preview/`，每 30 帧截图一次。完整渲染约 35–45 分钟，输出无声画面 `out/video.mp4`，随后自动生成 `out/score.wav`、`out/voice.wav`、`out/mixed.wav`、`out/captions.srt` 与最终 MP4。
+预览帧写入 `out/preview/`，每 30 帧截图一次。完整渲染约 12–18 分钟，输出无声画面 `out/video.mp4`，随后自动生成 `out/score.wav`、`out/voice.wav`、`out/mixed.wav`、`out/captions.srt` 与最终 MP4。
 
 ## 依赖
 
-Windows、Microsoft Edge、Node.js、Python 3，以及 numpy、scipy、Pillow、imageio-ffmpeg、pywin32。配乐、语音与画面均为离线生成；运行时不需要网络。
+Windows、Microsoft Edge、Node.js、Python 3，以及 numpy、scipy、Pillow、imageio-ffmpeg；Google TTS 需要已登录的 gcloud，离线配音可回退 pywin32/SAPI。作品运行时不需要网络。

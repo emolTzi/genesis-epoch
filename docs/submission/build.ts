@@ -55,7 +55,7 @@ html = html.replace(/<cover\s*\/?>/, () => {
 <div class="head"><span>2026 · 第十四届全国大学生数字媒体科技作品及创意竞赛</span><span>${DOC_LABEL}</span></div>
 <div class="title"><div class="zh">创世纪元</div><div class="sub">AI 文明诞生概率实验室</div><div class="en">GENESIS EPOCH · AI CIVILIZATION PROBABILITY LAB</div></div>
 <div class="slogan">你对规律的认识，决定你能改变宇宙的哪一层。</div>
-<div class="meta"><div><b>参赛赛项</b>指定命题 · 科幻+及元宇宙数字作品</div><div><b>作品形态</b>Web 3D 实时交互 · 单文件离线运行</div><div><b>核心技术</b>神经符号协同 · 基于主体的文明推演 · GPU 程序化渲染</div><div><b>参赛团队</b>TZI · 云南大学 · 李牧唐、普凡</div></div>
+<div class="meta"><div><b>参赛赛项</b>指定命题 · 科幻+及元宇宙数字作品</div><div><b>作品形态</b>Web 3D 实时交互 · 单文件离线运行</div><div><b>核心技术</b>神经符号协同 · 基于主体的文明推演 · GPU 程序化渲染</div></div>
 ${src ? '<span class="ai-badge">封面图 AI 生成</span>' : ''}</section>`;
 });
 
