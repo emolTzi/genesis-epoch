@@ -10,3 +10,5 @@ video/.tts.env
 docs/submission/out/
 docs/assets/gpt/raw/
 docs/submission/tech/out/
+__pycache__/
+*.pyc
