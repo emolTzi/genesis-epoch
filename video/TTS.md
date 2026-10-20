@@ -2,26 +2,25 @@
 
 给其他 agent / 其他工具用的速查页。**不需要 API Key**：凭据来自本机已登录的 gcloud 账号（`gcloud auth login` 已完成）。
 
-## 一、环境变量（已写入用户级，开新终端即生效）
+## 一、环境变量（只放连接配置）
 
-| 变量 | 值 | 说明 |
-|---|---|---|
-| `GOOGLE_CLOUD_PROJECT` | `project-7af3b5b5-0159-414f-9ae` | 已开通结算与 TTS API 的项目 |
-| `GOOGLE_TTS_PROJECT` | 同上 | 计费/配额项目（会作为 `x-goog-user-project` 发送） |
-| `GOOGLE_TTS_ENGINE` | `chirp3` | 默认引擎：`chirp3` 或 `gemini` |
-| `GOOGLE_TTS_MODEL` | `gemini-2.5-flash-tts` | Gemini 引擎的模型（另可用 `gemini-2.5-pro-tts`） |
-| `GOOGLE_TTS_VOICE` | `cmn-CN-Chirp3-HD-Charon` | Chirp3 默认音色 |
-| `GOOGLE_TTS_GEMINI_VOICE` | `Kore` | Gemini 默认音色（短名，如 `Charon`、`Puck`） |
-| `GOOGLE_TTS_PROMPT` | 沉稳纪录片语气… | Gemini 的风格提示词（作为 `input.prompt` 发送，不会被念出来） |
-| `GOOGLE_TTS_SPEAKING_RATE` | `1.2` | 全片统一语速（与 `video/.tts.env` 一致） |
-| `GOOGLE_TTS_ENDPOINT_CHIRP3` | `…/v1/text:synthesize` | 可覆盖 |
-| `GOOGLE_TTS_ENDPOINT_GEMINI` | `…/v1beta1/text:synthesize` | Gemini 必须 v1beta1 |
-| `GOOGLE_TTS_RETRY_SECONDS` | `70` | 429 时的重试间隔（Gemini 配额很紧） |
-| `GOOGLE_TTS_HELPER` | `…\video\gtts.py` | 脚本路径 |
-| `GOOGLE_TTS_CLI` | `…\video\bin\tts.cmd` | 命令行封装 |
-| `GOOGLE_TTS_CACHE` | `…\video\out\tts-cache` | 逐句缓存目录 |
+用户级环境变量里**只保留两个端点**，其余全部走代码默认值或本机配置文件：
 
-`video/.tts.env` 仍是本机配置的落盘副本（已 gitignore），优先级低于环境变量。
+| 变量 | 值 |
+|---|---|
+| `GOOGLE_TTS_ENDPOINT_CHIRP3` | `https://texttospeech.googleapis.com/v1/text:synthesize` |
+| `GOOGLE_TTS_ENDPOINT_GEMINI` | `https://texttospeech.googleapis.com/v1beta1/text:synthesize` |
+
+其余设置不入环境变量，按下面的来源取（优先级从高到低）：
+
+| 设置 | 来源 |
+|---|---|
+| 项目（`x-goog-user-project`） | `video/.tts.env` → `gcloud config get-value project`（当前均指向 `project-7af3b5b5-0159-414f-9ae`） |
+| Chirp3 音色 / 语速 | `video/.tts.env`（`cmn-CN-Chirp3-HD-Charon`、`1.2`） |
+| Gemini 模型 | `gtts.py` 默认 `gemini-2.5-flash-tts`，可用 `--model` 临时覆盖 |
+| Gemini 音色 | `gtts.py` 默认 `Kore`，可用 `--voice` 临时覆盖 |
+| Gemini 风格提示词 | 默认空，可用 `--prompt "…"` 临时传入 |
+| 429 重试间隔 | 代码默认 70 秒 |
 
 ## 二、三种调用方式
 
