@@ -5,6 +5,7 @@ assets-src/
 .DS_Store
 .claude/
 video/out/
+video/out_demo/
 video/node_modules/
 video/.tts.env
 docs/submission/out/
@@ -12,3 +13,4 @@ docs/assets/gpt/raw/
 docs/submission/tech/out/
 __pycache__/
 *.pyc
+docs/ppt/preview/
